@@ -1,2 +1,7 @@
 *.ibc
 *.o
+*.ttc
+*.ttm
+.build
+.exec
+

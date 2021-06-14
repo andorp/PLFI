@@ -1,0 +1,12 @@
+package plfi
+
+authors = "Andor Penzes"
+
+depends = contrib
+
+main = Main
+
+executable = plfi
+
+builddir = ".build"
+outputdir = ".exec"
