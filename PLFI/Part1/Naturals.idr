@@ -36,12 +36,12 @@ data N : Type where
     ----------
          N
 
--- export
--- Num N where
---   fromInteger n with (compare n 0)
---     fromInteger n | LT = Zero
---     fromInteger n | EQ = Zero
---     fromInteger n | Suc (fromInteger (n-1))
+export
+Num N where
+  fromInteger n with (compare n 0)
+     fromInteger n | LT = Zero
+     fromInteger n | EQ = Zero
+     fromInteger n | GT = Suc (fromInteger (n-1))
 
 total
 public export
