@@ -44,9 +44,11 @@ data N : Type where
 --     fromInteger n | Suc (fromInteger (n-1))
 
 total
-export
+public export
 (+) : N -> N -> N
-a + b = ?add1
+-- a + b = ?add1
+Zero    + m = m
+(Suc n) + m = Suc (n + m)
 
 export
 addEquation1 : Zero + n = n
@@ -70,6 +72,7 @@ infixr 8 ^
 -- Exercise: recommended
 
 total
+export
 (^) : N -> N -> N
 a ^ b = ?exp1
 
@@ -84,11 +87,13 @@ expEquation2 : m ^ (Suc n) = m * (m ^ n)
 infixl 6 -*
 
 total
+export
 (-*) : N -> N -> N
 a -* b = ?monus1
 
 -- Exercise: strech
 
+public export
 data Bin : Type where
   E : Bin
   O : Bin -> Bin
@@ -97,3 +102,12 @@ data Bin : Type where
 -- 1101 is encoded as
 -- IOIIE this needs to be read reversed:
 -- EIIOI
+
+export
+inc : Bin -> Bin
+
+export
+to : N -> Bin
+
+export
+from : Bin -> N

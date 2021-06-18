@@ -92,3 +92,51 @@ Our first corollary: rearranging
 export
 addRearrange : (m,n,p,q : N) -> (m + n) + (p + q) = m + (n + p) + q
 
+{-
+Associativity with rewrite
+addAssocRW : (m + n) + p = m + (n + p)
+-}
+
+addAssocWithRewrite : (m,n,p : N) -> (m + n) + p = m + (n + p)
+
+addIdentityRWithRewrite : (n : N) -> n + Zero = n
+
+addSucWithRewrite : (n, m : N) -> m + (Suc n) = Suc (m + n)
+
+addCommWithRewrite : (n, m : N) -> n + m = m + n
+
+-- Exercise (recommended)
+
+swap : (m,n,p : N) -> m + (n + p) = n + (m + p)
+
+-- Exercise (recommended)
+
+multDistribAdd : (m,n,p : N) -> (m + n) * p = m * p + n * p
+
+-- Exercise (recommended)
+
+multAssoc : (m,n,p : N) -> (m * n) * p = m * (n * p)
+
+-- Exercise (practice)
+
+multComm : (m,n : N) -> m * n = n * m
+
+-- Exercise (practice)
+
+zeroMonus : (n : N) -> Zero -* n = Zero
+
+-- Exercise (practice)
+
+monusAssoc : (m,n,p : N) -> m -* n -* p = m -* (n + p)
+
+-- Exercise (strech)
+
+expDistribLOverMult : (m,n,p : N) -> m ^ (n + p) = (m ^ n) * (m ^ p)
+expDistribOverMult : (m,n,p : N) -> (m * n) ^ p = (m ^ p) * (n ^ p)
+expAssoc : (m,n,p : N) -> (m ^ n) ^ p = m ^ (n ^ p)
+
+-- Exercise (strech)
+
+incFrom : (b : Bin) -> from (inc b) = Suc (from b)
+fromTo  : (b : Bin) -> to (from b) = b
+toFrom  : (b : Bin) -> (to n) = n
