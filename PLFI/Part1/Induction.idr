@@ -6,6 +6,7 @@ import PLFI.Part1.Naturals
 import public Syntax.PreorderReasoning
 
 %hide Prelude.(+)
+%hide Prelude.(*)
 
 {-
 

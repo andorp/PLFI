@@ -1,11 +1,13 @@
 module PLFI.Part1.Relations
 
+import PLFI.Part1.Induction
 import PLFI.Part1.Naturals
 import Syntax.PreorderReasoning
 
 %default total
 
 %hide Prelude.(+)
+%hide Prelude.(*)
 
 -- z≤n --------
 --     zero ≤ n
@@ -99,9 +101,95 @@ lteTotal (Suc m) (Suc n) with (lteTotal m n)
   lteTotal (Suc m) (Suc x) | Flipped nm = Flipped (SucLTE nm)
 
 addMonoR_LTE
-  : (n,p,q : N) ->
-      LTE p q ->
+  : (n,p,q : N)    ->
+      LTE p q      ->
   -------------------
   LTE (n + p) (n + q)
 addMonoR_LTE Zero    p q lte = lte
 addMonoR_LTE (Suc m) p q lte = SucLTE (addMonoR_LTE m p q lte)
+
+addMonoL_LTE
+  :   (m,n,p : N)  ->
+        LTE m n    ->
+  -------------------
+  LTE (m + p) (n + p)
+addMonoL_LTE m n p lte
+  = rewrite (addComm m p) in 
+    rewrite (addComm n p) in
+    addMonoR_LTE p m n lte
+
+addMono_LTE
+  : (m,n,p,q : N)  ->
+       LTE m n     ->
+       LTE p q     ->
+  -------------------
+  LTE (m + p) (n + q)
+addMono_LTE m n p q mn pq = lteTrans (addMonoL_LTE m n p mn) (addMonoR_LTE n p q pq)
+
+-- Exercise (strech) *-mono-≤
+
+multMonoLTE
+  : (m,n,p,q : N)  ->
+        LTE m n    ->
+        LTE p q    ->
+  -------------------
+  LTE (m * p) (n * q)
+
+-- Strict inequality
+
+data LT : N -> N -> Type where
+  
+  ZeroLT
+    :   {n : N}  -> 
+    ---------------
+    LT Zero (Suc n)
+  
+  SucLT
+    :  {n, m : N}   ->
+    ------------------
+    LT (Suc n) (Suc m)
+
+-- Exercise lteTrans (recommended)
+
+ltTrans
+  : (m,n,p : N) -> 
+      LT m n   ->
+      LT n p    ->
+  ----------------
+      LT m p
+
+-- Exercise trichotomy (practice)
+
+data Trichotomy : N -> N -> Type where
+
+-- Exercise addMonoLT (practice)
+
+addMonoLT
+  : (m,n,p,q : N) ->
+        LT m n    ->
+        LT p q    -> 
+  ------------------
+  LT (m + p) (n + q)
+
+-- Exercise lte iff lt (recommended)
+
+lteIffLtL
+  :   (m,n : N)   ->
+    LTE (Suc m) n ->
+  ------------------
+       LT m n
+
+lteIffLtR
+  : (m,n : N) ->
+     LT m n   ->
+  --------------
+   LTE (Suc n) m
+
+-- Exercise ltTransRevisited (practice)
+
+lteTransRevisited
+  : (m,n,p : N) ->
+       LT m n   ->
+       LT n p   ->
+  ----------------
+       LT m p
