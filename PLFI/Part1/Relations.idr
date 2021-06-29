@@ -187,9 +187,72 @@ lteIffLtR
 
 -- Exercise ltTransRevisited (practice)
 
+{-
 lteTransRevisited
   : (m,n,p : N) ->
        LT m n   ->
        LT n p   ->
   ----------------
        LT m p
+-}
+
+-- TODO: Report this issue
+-- mutual
+
+--   namespace Even
+--     public export
+--     data Even : N -> Type where
+
+--       ZeroE :
+--         ---------
+--         Even Zero
+      
+--       SucE
+--         : {n : N} ->
+--           Odd n   ->
+--         ------------
+--         Even (Suc n)
+
+--   namespace Odd
+
+--     public export
+--     data Odd : N -> Type where
+
+--       SucE
+--         : {n : N} ->
+--           Even n  ->
+--         -------------
+--         Odd (Suc n)
+
+-- mutual
+--   evenAddEven
+--     : {m, n : N} ->
+--         Even n   ->
+--         Even m   ->
+--     ---------------
+--       Even (n + m)
+--   evenAddEven ZeroE e2 = e2
+--   evenAddEven (SucE x) e2 = ?e_2
+
+--   -- oddAddEven
+--   --   : {m, n : N} ->
+--   --       Odd m    ->
+--   --       Even n   ->
+--   --   ---------------
+--   --     Odd (m + n)
+
+-- Exercise - Bin-predicates
+
+-- Can : Bin -> Type
+
+-- Can b
+-- -----------
+-- Can (inc b)
+
+-- ----------
+-- Can (to n)
+
+--      Can b
+-- ---------------
+-- to (from b) = b
+
