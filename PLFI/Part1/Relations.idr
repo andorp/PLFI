@@ -153,7 +153,7 @@ data LT : N -> N -> Type where
 
 ltTrans
   : (m,n,p : N) -> 
-      LT m n   ->
+      LT m n    ->
       LT n p    ->
   ----------------
       LT m p
@@ -188,7 +188,8 @@ lteIffLtR
 -- Exercise ltTransRevisited (practice)
 
 {-
-lteTransRevisited
+-- This makes Idris go haywire.
+ltTransRevisited
   : (m,n,p : N) ->
        LT m n   ->
        LT n p   ->
@@ -255,4 +256,3 @@ lteTransRevisited
 --      Can b
 -- ---------------
 -- to (from b) = b
-

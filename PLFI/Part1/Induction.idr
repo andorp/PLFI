@@ -114,30 +114,30 @@ swap : (m,n,p : N) -> m + (n + p) = n + (m + p)
 
 multDistribAdd : (m,n,p : N) -> (m + n) * p = m * p + n * p
 
--- Exercise (recommended)
+-- -- Exercise (recommended)
 
-multAssoc : (m,n,p : N) -> (m * n) * p = m * (n * p)
+-- multAssoc : (m,n,p : N) -> (m * n) * p = m * (n * p)
 
--- Exercise (practice)
+-- -- Exercise (practice)
 
-multComm : (m,n : N) -> m * n = n * m
+-- multComm : (m,n : N) -> m * n = n * m
 
--- Exercise (practice)
+-- -- Exercise (practice)
 
-zeroMonus : (n : N) -> Zero -* n = Zero
+-- zeroMonus : (n : N) -> Zero -* n = Zero
 
--- Exercise (practice)
+-- -- Exercise (practice)
 
-monusAssoc : (m,n,p : N) -> m -* n -* p = m -* (n + p)
+-- monusAssoc : (m,n,p : N) -> m -* n -* p = m -* (n + p)
 
--- Exercise (strech)
+-- -- Exercise (strech)
 
-expDistribLOverMult : (m,n,p : N) -> m ^ (n + p) = (m ^ n) * (m ^ p)
-expDistribOverMult : (m,n,p : N) -> (m * n) ^ p = (m ^ p) * (n ^ p)
-expAssoc : (m,n,p : N) -> (m ^ n) ^ p = m ^ (n ^ p)
+-- expDistribLOverMult : (m,n,p : N) -> m ^ (n + p) = (m ^ n) * (m ^ p)
+-- expDistribOverMult : (m,n,p : N) -> (m * n) ^ p = (m ^ p) * (n ^ p)
+-- expAssoc : (m,n,p : N) -> (m ^ n) ^ p = m ^ (n ^ p)
 
--- Exercise (strech)
+-- -- Exercise (strech)
 
-incFrom : (b : Bin) -> from (inc b) = Suc (from b)
-fromTo  : (b : Bin) -> to (from b) = b
-toFrom  : (b : Bin) -> (to n) = n
+-- incFrom : (b : Bin) -> from (inc b) = Suc (from b)
+-- fromTo  : (b : Bin) -> to (from b) = b
+-- toFrom  : (b : Bin) -> (to n) = n
