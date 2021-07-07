@@ -1,6 +1,6 @@
 module PLFI.Part1.Naturals
 
--- http://plfa.gihub.io/Naturals
+-- https://plfa.gihub.io/Naturals
 
 import Syntax.PreorderReasoning
 
@@ -62,7 +62,7 @@ public export
 a * b = ?mult1
 
 export
-multEquation1 : Zero    * n = Zero
+multEquation1 : Zero * n = Zero
 
 export
 multEquation2 : (Suc m) * n = n + (m * n)
