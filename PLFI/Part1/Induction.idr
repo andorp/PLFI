@@ -34,8 +34,25 @@ Our first proof: associativity
 (Suc m + n) + p = suc m + (n + p)
 -}
 
+-- export
+-- addAssoc : (m, n, p : N) -> (m + n) + p = m + (n + p)
+-- addAssoc Zero    n p = Refl
+-- addAssoc (Suc m) n p = cong Suc $ addAssoc m n p
+
 export
 addAssoc : (m, n, p : N) -> (m + n) + p = m + (n + p)
+addAssoc Zero n p = Calc $
+  |~ (Zero + n) + p
+  ~~ n + p             ... (Refl)
+  ~~ Zero + (n + p)    ... (Refl)
+addAssoc (Suc m) n p = Calc $
+  |~ ((Suc m) + n) + p
+  ~~ Suc (m + n) + p    ... (Refl)
+  ~~ Suc ((m + n) + p)  ... (Refl)
+  ~~ Suc (m + (n + p))  ... (cong Suc (addAssoc m n p))
+  ~~ Suc m + (n + p)    ... (Refl)
+
+
 
 {-
 addAssoc : (m, n, p : N) -> (m + n) + p = m + (n + p)
