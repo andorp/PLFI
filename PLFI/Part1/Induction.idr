@@ -52,8 +52,6 @@ addAssoc (Suc m) n p = Calc $
   ~~ Suc (m + (n + p))  ... (cong Suc (addAssoc m n p))
   ~~ Suc m + (n + p)    ... (Refl)
 
-
-
 {-
 addAssoc : (m, n, p : N) -> (m + n) + p = m + (n + p)
 addAssoc Zero n p = Calc $
@@ -80,9 +78,22 @@ m + zero = m
 
 export
 addIdentityL : (n : N) -> Zero + n = n
+addIdentityL n = Refl
+
+-- addIdentityR1 : (n : N) -> n + Zero = n
+-- addIdentityR1 Zero = Refl
+-- addIdentityR1 (Suc m) = cong Suc (addIdentityR1 m)
 
 export
 addIdentityR : (n : N) -> n + Zero = n
+addIdentityR Zero = Calc $
+  |~ Zero + Zero
+  ~~ Zero         ... (Refl)       
+addIdentityR (Suc m) = Calc $
+  |~ (Suc m) + Zero
+  ~~ Suc (m + Zero) ... (Refl)
+  ~~ Suc m          ... (cong Suc (addIdentityR m))
+
 
 {-
 The second lemma
@@ -91,9 +102,19 @@ m + suc n = suc (m + n)
 
 export
 addSuccL : (m, n : N) -> (Suc m) + n = Suc (m + n)
+addSuccL m n = Refl
 
 export
 addSucR : (m, n : N) -> m + (Suc n) = Suc (m + n)
+addSucR Zero n = Calc $
+  |~ Zero + (Suc n)
+  ~~ Suc n           ... (Refl)
+  ~~ Suc (Zero + n)  ... (Refl)
+addSucR (Suc m) n = Calc $
+  |~ (Suc m) + (Suc n)
+  ~~ Suc (m + Suc n)   ... (Refl)
+  ~~ Suc (Suc (m + n)) ... (cong Suc (addSucR m n))
+  ~~ Suc ((Suc m) + n) ... (Refl)
 
 {-
 The proposition
@@ -102,6 +123,12 @@ m + n = n + m
 
 export
 addComm : (n, m : N) -> n + m = m + n
+addComm Zero    m = sym (addIdentityR m)
+addComm (Suc x) m = Calc $
+  |~ (Suc x) + m
+  ~~ Suc (x + m) ... (Refl)
+  ~~ Suc (m + x) ... (cong Suc (addComm x m))
+  ~~ m + (Suc x) ... (sym (addSucR m x))
 
 {-
 Our first corollary: rearranging

@@ -7,7 +7,7 @@ import PLFI.Part1.Equality
 
 main : IO ()
 main = do
-  putStrLn "[ ] Part1.Naturals"
+  putStrLn "[x] Part1.Naturals"
   putStrLn "[ ] Part1.Induction"
   putStrLn "[ ] Part1.Relations"
   putStrLn "[ ] Part1.Equality"
