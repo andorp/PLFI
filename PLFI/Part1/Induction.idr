@@ -136,6 +136,20 @@ Our first corollary: rearranging
 
 export
 addRearrange : (m,n,p,q : N) -> (m + n) + (p + q) = m + (n + p) + q
+addRearrange m n p q = Calc $
+  |~ (m + n) + (p + q) 
+  ~~ m + (n + (p + q)) ... (addAssoc m n (p + q))
+  ~~ m + ((n + p) + q) ... (cong (m+) (sym (addAssoc n p q)))
+  ~~ (m + (n + p)) + q ... (sym (addAssoc m (n+p) q))
+  ~~ m + (n + p) + q   ... (Refl)
+
+-- Vect m Int
+-- Vect (S n) Int
+
+-- lemmaForF : n + S m = S (n + m)
+
+-- f : Vect n a -> Vect (S m) a -> Vect (S (n + m)) a
+-- f x y = ... (rewrite lemmaForF (... x y))
 
 {-
 Associativity with rewrite
@@ -143,12 +157,43 @@ addAssocRW : (m + n) + p = m + (n + p)
 -}
 
 addAssocWithRewrite : (m,n,p : N) -> (m + n) + p = m + (n + p)
+addAssocWithRewrite Zero n p
+  = Refl
+addAssocWithRewrite (Suc m) n p
+  = rewrite (addAssocWithRewrite m n p) in
+    Refl
+
+addAssocWithRewriteN : (m,n,p : N) -> (m + n) + p = m + (n + p)
+addAssocWithRewriteN m Zero p
+  = rewrite (addIdentityR m) in
+    Refl
+addAssocWithRewriteN m (Suc x) p
+  = rewrite (addSucR m x) in
+    rewrite (addSucR m (x + p)) in
+    rewrite (addAssocWithRewriteN m x p) in
+    Refl
 
 addIdentityRWithRewrite : (n : N) -> n + Zero = n
+addIdentityRWithRewrite Zero
+  = Refl
+addIdentityRWithRewrite (Suc m)
+  = rewrite (addIdentityRWithRewrite m) in
+    Refl
 
-addSucWithRewrite : (n, m : N) -> m + (Suc n) = Suc (m + n)
+addSucWithRewrite : (m, n : N) -> m + (Suc n) = Suc (m + n)
+addSucWithRewrite Zero n
+  = Refl
+addSucWithRewrite (Suc m) n
+  = rewrite (addSucWithRewrite m n) in Refl
 
 addCommWithRewrite : (n, m : N) -> n + m = m + n
+addCommWithRewrite Zero m
+  = rewrite (addIdentityRWithRewrite m) in
+    Refl
+addCommWithRewrite (Suc x) m
+  = rewrite (addCommWithRewrite x m) in
+    rewrite (addSucWithRewrite m x) in
+    Refl
 
 -- Exercise (recommended)
 
