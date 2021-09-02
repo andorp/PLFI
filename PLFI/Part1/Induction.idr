@@ -143,14 +143,6 @@ addRearrange m n p q = Calc $
   ~~ (m + (n + p)) + q ... (sym (addAssoc m (n+p) q))
   ~~ m + (n + p) + q   ... (Refl)
 
--- Vect m Int
--- Vect (S n) Int
-
--- lemmaForF : n + S m = S (n + m)
-
--- f : Vect n a -> Vect (S m) a -> Vect (S (n + m)) a
--- f x y = ... (rewrite lemmaForF (... x y))
-
 {-
 Associativity with rewrite
 addAssocRW : (m + n) + p = m + (n + p)
@@ -201,15 +193,17 @@ swap : (m,n,p : N) -> m + (n + p) = n + (m + p)
 
 -- Exercise (recommended)
 
+lemmaMultDistribAdd : (m,n,p : N) -> p * (m + n) = p * m + p * n 
+
 multDistribAdd : (m,n,p : N) -> (m + n) * p = m * p + n * p
 
--- -- Exercise (recommended)
+-- Exercise (recommended)
 
--- multAssoc : (m,n,p : N) -> (m * n) * p = m * (n * p)
+multAssoc : (m,n,p : N) -> (m * n) * p = m * (n * p)
 
--- -- Exercise (practice)
+-- Exercise (practice)
 
--- multComm : (m,n : N) -> m * n = n * m
+multComm : (m,n : N) -> m * n = n * m
 
 -- -- Exercise (practice)
 
