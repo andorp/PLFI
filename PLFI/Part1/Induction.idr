@@ -189,21 +189,54 @@ addCommWithRewrite (Suc x) m
 
 -- Exercise (recommended)
 
+-- addAssoc : (m, n, p : N) -> (m + n) + p = m + (n + p)
+-- addComm  : (n, m : N)    -> n + m = m + n 
+
 swap : (m,n,p : N) -> m + (n + p) = n + (m + p)
+swap m n p = Calc $
+  |~ m + (n + p)
+  ~~ (m + n) + p ... (sym (addAssoc m n p))
+  ~~ (n + m) + p ... (cong (+p) (addComm m n))
+  ~~ n + (m + p) ... (addAssoc n m p)
 
 -- Exercise (recommended)
 
-lemmaMultDistribAdd : (m,n,p : N) -> p * (m + n) = p * m + p * n 
-
-multDistribAdd : (m,n,p : N) -> (m + n) * p = m * p + n * p
+multDistribAddR : (m,n,p : N) -> (m + n) * p = m * p + n * p
+multDistribAddR Zero n p = Refl
+multDistribAddR (Suc m) n p = Calc $
+  |~ p + ((m + n) * p)
+  ~~ p + ((m * p) + (n * p)) ... (cong (p+) (multDistribAddR m n p))
+  ~~ (p + (m * p)) + (n * p) ... (sym (addAssoc p (m * p) (n * p)))
 
 -- Exercise (recommended)
 
 multAssoc : (m,n,p : N) -> (m * n) * p = m * (n * p)
+multAssoc Zero n p = Refl
+multAssoc (Suc m) n p = Calc $
+  |~ (n + (m * n)) * p
+  ~~ (n * p) + ((m * n) * p) ... (multDistribAddR n (m * n) p)
+  ~~ (n * p) + (m * (n * p)) ... (cong ((n*p)+) (multAssoc m n p))
 
 -- Exercise (practice)
 
+multZeroR : (n : N) -> Zero = n * Zero
+multZeroR Zero = Refl
+multZeroR (Suc m) = multZeroR m
+
+multOneL : (n : N) -> 1 * n = n
+multOneL n = (addIdentityR n)
+
 multComm : (m,n : N) -> m * n = n * m
+multComm Zero n = multZeroR n
+multComm (Suc m) n = Calc $
+  |~ n + (m * n)
+  ~~ (1 * n) + (m * n) ... (cong (+ (m * n)) (sym (multOneL n)))
+  ~~ (1 + m) * n       ... (sym (multDistribAddR 1 m n))
+  ~~ (1 * n) + (m * n) ... (?h2)
+  ~~ n * Suc m         ... (?h1)
+
+multDistribAddL : (m,n,p : N) -> p * (m + n) = p * m + p * n
+
 
 -- -- Exercise (practice)
 
