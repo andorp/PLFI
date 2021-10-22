@@ -60,7 +60,6 @@ test = (-7)
 total
 public export
 (+) : N -> N -> N
--- a + b = Zero -- ?add1
 Zero    + m = m
 (Suc n) + m = Suc (n + m)
 

@@ -224,19 +224,31 @@ multZeroR Zero = Refl
 multZeroR (Suc m) = multZeroR m
 
 multOneL : (n : N) -> 1 * n = n
-multOneL n = (addIdentityR n)
+multOneL n = addIdentityR n
+
+multOneR : (n : N) -> n = n * 1
+multOneR Zero    = Refl
+multOneR (Suc m) = cong Suc (multOneR m)
+
+multDistribAddL : (m,n,p : N) -> p * (m + n) = p * m + p * n
+multDistribAddL m n Zero = Refl
+multDistribAddL m n (Suc p) = Calc $
+  |~ (m + n) + (p * (m + n))
+  ~~ (m + n) + (p * m + p * n)     ... (cong (\x => (m+n)+x) (multDistribAddL m n p))
+  ~~ ((m + n) + (p * m)) + (p * n) ... (sym (addAssoc (m + n) (p * m) (p * n)))
+  ~~ (m + (n + (p * m))) + (p * n) ... (cong (+(p*n)) (addAssoc m n (p * m)))
+  ~~ (m + ((p * m) + n)) + (p * n) ... (cong (\x => (m+x)+(p*n)) (addComm n (p * m)))
+  ~~ ((m + (p * m)) + n) + (p * n) ... (cong (\x => x+(p*n)) (sym (addAssoc m (p * m) n)))
+  ~~ (m + (p * m)) + (n + (p * n)) ... (addAssoc (m + (p * m)) n (p * n))
 
 multComm : (m,n : N) -> m * n = n * m
 multComm Zero n = multZeroR n
 multComm (Suc m) n = Calc $
   |~ n + (m * n)
-  ~~ (1 * n) + (m * n) ... (cong (+ (m * n)) (sym (multOneL n)))
-  ~~ (1 + m) * n       ... (sym (multDistribAddR 1 m n))
-  ~~ (1 * n) + (m * n) ... (?h2)
-  ~~ n * Suc m         ... (?h1)
-
-multDistribAddL : (m,n,p : N) -> p * (m + n) = p * m + p * n
-
+  ~~ n + (n * m)        ... (cong (\x => n+x) (multComm m n))
+  ~~ (n * 1) + (n * m)  ... (cong (\x => x+(n*m)) (multOneR n))
+  ~~ n * (1 + m)        ... (sym (multDistribAddL 1 m n))
+  ~~ n * (Suc m)        ... (Refl)
 
 -- -- Exercise (practice)
 
