@@ -180,22 +180,62 @@ data (<) : N -> N -> Type where
     Zero < (Suc n)
   
   SucLT
-    :  {n, m : N}   ->
+    :  {m, n : N}   ->
+         m < n      ->
     ------------------
-     (Suc n) < (Suc m)
+     (Suc m) < (Suc n)
 
 -- Exercise lteTrans (recommended)
 
 ltTrans
+  : {m,n,p : N} -> 
+       m < n    ->
+       n < p    ->
+  ----------------
+       m < p
+ltTrans ZeroLT    (SucLT x) = ZeroLT
+ltTrans (SucLT x) (SucLT y) = SucLT (ltTrans x y)
+
+ltTrans1
   : (m,n,p : N) -> 
        m < n    ->
        n < p    ->
   ----------------
        m < p
+ltTrans1 Zero    (Suc n) (Suc p) ZeroLT    (SucLT x) = ZeroLT
+ltTrans1 (Suc m) (Suc n) (Suc p) (SucLT x) (SucLT y) = SucLT (ltTrans1 m n p x y)
 
 -- Exercise trichotomy (practice)
 
 data Trichotomy : N -> N -> Type where
+  LT : m < n -> Trichotomy m n
+  EQ : m = n -> Trichotomy m n
+  GT : n < m -> Trichotomy m n
+
+--  0 m : N
+--  0 n : N
+-- ------------------------------
+-- trichotomy_rhs : Trichotomy m n
+trichotomy0 : forall m , n . Trichotomy m n
+trichotomy0 = ?trichotomy_rhs0
+
+
+trichotomy : (m, n : N) -> Trichotomy m n
+trichotomy Zero    Zero     = EQ Refl
+trichotomy Zero    (Suc _)  = LT ZeroLT
+trichotomy (Suc _) Zero     = GT ZeroLT
+trichotomy (Suc m) (Suc n)  = case (trichotomy m n) of
+  (LT mn) => LT (SucLT mn)
+  (EQ mm) => EQ (cong Suc mm)
+  (GT nm) => GT (SucLT nm)
+
+-- trichotomy (Suc m) (Suc n) with (trichotomy m n)
+--   _ | (LT x)   = ?trichotomy_rhs_4_rhs4_1
+--   _ | (EQ prf) = ?trichotomy_rhs_4_rhs4_2
+--   _ | (GT x)   = ?trichotomy_rhs_4_rhs4_3
+
+
+
 
 -- Exercise addMonoLT (practice)
 
