@@ -234,10 +234,25 @@ trichotomy (Suc m) (Suc n)  = case (trichotomy m n) of
 --   _ | (EQ prf) = ?trichotomy_rhs_4_rhs4_2
 --   _ | (GT x)   = ?trichotomy_rhs_4_rhs4_3
 
-
-
-
 -- Exercise addMonoLT (practice)
+
+addMonoR_LT
+  : (n,p,q : N)    ->
+       p < q       ->
+  -------------------
+   (n + p) < (n + q)
+addMonoR_LT Zero    p q pq = pq
+addMonoR_LT (Suc m) p q pq = SucLT (addMonoR_LT m p q pq)
+
+addMonoL_LT
+  :   (m,n,p : N)  ->
+         m < n     ->
+  -------------------
+   (m + p) < (n + p)
+addMonoL_LT m n p mn = 
+  rewrite (addComm m p) in
+  rewrite (addComm n p) in
+  addMonoR_LT p m n mn
 
 addMonoLT
   : (m,n,p,q : N) ->
@@ -245,6 +260,33 @@ addMonoLT
         p < q     -> 
   ------------------
    (m + p) < (n + q)
+addMonoLT m n p q mn pq
+  = ltTrans
+      {n=(n + p)}
+      (addMonoL_LT m n p mn)
+      (addMonoR_LT n p q pq)
+
+{-
+Memo:
+interface Transitive rel => Proof (rel : N -> N -> Type) where
+  {-# MINIMAL (monoL | monoR) #-}
+  monoL : ({n,m,p: _} -> rel n m -> rel (n + p) (m + p))
+  monoL = monoLFromMonoRAndPlusComm
+  monoR : ({n,m,p: _} -> rel n m -> rel (n + p) (m + p))
+  monoR = monoRFromMonoLAndPlusComm
+  
+proofIsMonoProof : Proof rel => rel n m -> rel p q -> rel (n + p) (m + p)
+proofIsMonoProof
+  = trans
+      {n=(n + p)}
+      (monoL m n p mn)
+      (monoR n p q pq)
+      
+Transitive : (rel : N -> N -> Type) -> Type
+Transitive rel = forall n,m,p : rel n m -> rel m p -> rel n p
+-- Transitive rel = {n,m,p : N} -> rel n m -> rel m p -> rel n p
+-}
+
 
 -- Exercise lte iff lt (recommended)
 
@@ -253,12 +295,16 @@ lteIffLtL
     (Suc m) <= n  ->
   ------------------
        m < n
+lteIffLtL Zero    (Suc _) (Suc x) = ZeroLT
+lteIffLtL (Suc m) (Suc _) (Suc x) = SucLT (lteIffLtL m _ x)
 
 lteIffLtR
-  : (m,n : N) ->
-      m < n   ->
-  --------------
-    (Suc n) < m
+  : (m,n : N)  ->
+      m < n    ->
+  ---------------
+    (Suc m) <= n
+lteIffLtR Zero    (Suc _) ZeroLT    = Suc Zero
+lteIffLtR (Suc m) (Suc _) (SucLT x) = Suc (lteIffLtR m _ x)
 
 -- Exercise ltTransRevisited (practice)
 
