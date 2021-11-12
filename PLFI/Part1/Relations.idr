@@ -173,7 +173,7 @@ multMonoLTE
 infix 4 <
 
 data (<) : N -> N -> Type where
-  
+
   ZeroLT
     :   {n : N}  -> 
     ---------------
@@ -196,14 +196,25 @@ ltTrans
 ltTrans ZeroLT    (SucLT x) = ZeroLT
 ltTrans (SucLT x) (SucLT y) = SucLT (ltTrans x y)
 
-ltTrans1
-  : (m,n,p : N) -> 
-       m < n    ->
-       n < p    ->
-  ----------------
-       m < p
-ltTrans1 Zero    (Suc n) (Suc p) ZeroLT    (SucLT x) = ZeroLT
-ltTrans1 (Suc m) (Suc n) (Suc p) (SucLT x) (SucLT y) = SucLT (ltTrans1 m n p x y)
+namespace LTTrans
+
+  ltTrans1
+    : (m,n,p : N) -> 
+        m < n    ->
+        n < p    ->
+    ----------------
+        m < p
+  ltTrans1 Zero    (Suc n) (Suc p) ZeroLT    (SucLT x) = ZeroLT
+  ltTrans1 (Suc m) (Suc n) (Suc p) (SucLT x) (SucLT y) = SucLT (ltTrans1 m n p x y)
+
+  public export
+  ltTrans2
+    : {m,n,p : N} -> 
+        m < n    ->
+        n < p    ->
+    ----------------
+        m < p
+  ltTrans2 {m,n,p} mn np = ltTrans1 m n p mn np
 
 -- Exercise trichotomy (practice)
 
@@ -216,9 +227,11 @@ data Trichotomy : N -> N -> Type where
 --  0 n : N
 -- ------------------------------
 -- trichotomy_rhs : Trichotomy m n
-trichotomy0 : forall m , n . Trichotomy m n
-trichotomy0 = ?trichotomy_rhs0
-
+0
+trich : forall m , n . Trichotomy m n
+trich {m = Zero} {n = Zero} = EQ Refl
+trich {m = Zero} {n = (Suc m)} = LT ZeroLT
+trich {m = (Suc m)} {n = n} = ?trichotomy_rhs0_2
 
 trichotomy : (m, n : N) -> Trichotomy m n
 trichotomy Zero    Zero     = EQ Refl
@@ -308,14 +321,81 @@ lteIffLtR (Suc m) (Suc _) (SucLT x) = Suc (lteIffLtR m _ x)
 
 -- Exercise ltTransRevisited (practice)
 
+-- Give an alternative proof that strict inequality is transitive,
+-- using the relation between strict inequality and inequality
+-- and the fact that inequality is transitive.
+
+{-
+lteIffLtR
+  : (m,n : N)  ->
+      m < n    ->
+  ---------------
+    (Suc m) <= n
+lteIffLtL
+  :   (m,n : N)   ->
+    (Suc m) <= n  ->
+  ------------------
+       m < n
+lteTrans
+  : {m,n,p : N} ->
+    m <= n ->
+    n <= p ->
+  ----------------
+    m <= p
+-}
+
+lteSucc : (n : N) -> n <= Suc n
+lteSucc Zero    = Zero
+lteSucc (Suc m) = Suc (lteSucc m)
+
+infixr 4 `lteTrans`
+
 ltTransRevisited
   : (m,n,p : N) ->
        m < n   ->
        n < p   ->
   ----------------
        m < p
+ltTransRevisited m n p mn np with (lteIffLtR m n mn, lteIffLtR n p np)
+  _ | (lr1, lr2) = lteIffLtL m p $ lr1 `lteTrans` lteSucc n `lteTrans` lr2
 
--- TODO: Report this issue
+ltTransRevisited2
+  : (m,n,p : N) ->
+       m < n   ->
+       n < p   ->
+  ----------------
+       m < p
+ltTransRevisited2 m n p mn np
+  = lteIffLtL m p
+  $ lteIffLtR m n mn `lteTrans` lteSucc n `lteTrans` lteIffLtR n p np
+
+{-
+   lr1 : Suc m <= n
+   lr4 : n <= Suc n
+   lr2 : Suc n <= p
+------------------------------
+   h1 : Suc m <= p
+-}
+
+namespace Even0
+
+  public export
+  data Prop = Even | Odd
+
+  public export
+  flip : Prop -> Prop
+  flip Even = Odd
+  flip Odd = Even
+
+  public export
+  data EvenOrOdd : Prop -> N -> Type where
+    Zero : EvenOrOdd Even Zero
+    Suc  : EvenOrOdd p    n -> EvenOrOdd (flip p) (Suc n)
+
+  public export
+  isEven : N -> Type    
+  isEven n = EvenOrOdd Even n
+
 mutual
 
   namespace Even
@@ -344,20 +424,26 @@ mutual
         -------------
         Odd (Suc n)
 
-mutual
-  evenAddEven
-    : {m, n : N} ->
-        Even n   ->
-        Even m   ->
-    ---------------
-      Even (n + m)
+total
+evenAddEven
+  : {m, n : N} ->
+      Even m   ->
+      Even n   ->
+  ---------------
+    Even (m + n)
 
-  oddAddEven
-    : {m, n : N} ->
-        Odd m    ->
-        Even n   ->
-    ---------------
-      Odd (m + n)
+total
+oddAddEven
+  : {m, n : N} ->
+      Odd m    ->
+      Even n   ->
+  ---------------
+    Odd (m + n)
+
+evenAddEven Zero     en = en
+evenAddEven (Suc om) en = Suc (oddAddEven om en)
+
+oddAddEven (Suc em) on = Suc (evenAddEven em on)
 
 -- Exercise - Bin-predicates
 
