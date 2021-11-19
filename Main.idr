@@ -9,5 +9,5 @@ main : IO ()
 main = do
   putStrLn "[x] Part1.Naturals"
   putStrLn "[x] Part1.Induction"
-  putStrLn "[ ] Part1.Relations"
+  putStrLn "[x] Part1.Relations"
   putStrLn "[ ] Part1.Equality"

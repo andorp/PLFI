@@ -10,6 +10,9 @@ public export
 data Equal : forall a, b . a -> b -> Type where
      [search a b]
      Refl : {0 x : a} -> Equal x x
+
+(~=~) : (x : a) -> (y : b) -> Type
+(~=~) = Equal
 -}
 
 %hide sym
@@ -27,13 +30,40 @@ trans : {A : Type} -> {x,y,z : A} ->
     y = z ->
   ----------
     x = z
-trans Refl Refl = Refl
+trans Refl p = ?h1
+
+trans1 : {ta,tb,tc : Type} -> {x : ta} -> {y : tb} -> {z : tc} ->
+    x ~=~ y ->
+    y ~=~ z ->
+  ----------
+    x ~=~ z
+trans1 {tb = ta} {tc = ta} Refl Refl = Refl
+
+
+{-
+public export
+data Equal : forall a, b . a -> b -> Type where
+     [search a b]
+     Refl : {0 x : a} -> Equal x x
+
+(~=~) : (x : a) -> (y : b) -> Type
+(~=~) = Equal
+-}
+
 
 cong : {A, B : Type} -> (f : A -> B) -> {x, y : A} ->
     x = y  ->
   -----------
    f x = f y
 cong f Refl = Refl
+
+-- Wrong:
+-- injectivity : {A, B : Type} -> (f : A -> B) -> {x, y : A} ->
+--   f x = f y ->
+--   ------------
+--     x = y
+-- injectivity f {x} {y} Refl = ?injectivity_rhs
+
 
 congApp : {A, B : Type} -> {f, g : A -> B} ->
            f = g      ->
