@@ -3,6 +3,9 @@ module PLFI.Part1.Isomorphism
 import Data.Nat
 import Data.Vect
 import Syntax.PreorderReasoning
+import Syntax.PreorderReasoning.Generic
+import Control.Order
+import Control.Relation
 
 0
 handwaving : {t : Type} -> (a : t) -> (b : t) -> (a = b)
@@ -53,8 +56,8 @@ record Iso (a, b : Type) where
   constructor MkIso
   to     : a -> b
   from   : b -> a
-  fromTo : (x : a) -> from (to x) = x
-  toFrom : (y : b) -> to (from y) = y
+  fromTo : (x : a) -> from (to x) === x
+  toFrom : (y : b) -> to (from y) === y
 
 -- interface IsoI a b where
 --   toI   : a -> b
@@ -150,3 +153,110 @@ isoTrans ab bc = MkIso
                     -- rewriteP Refl pa = pa
   }
 
+-- module ≃-Reasoning where
+
+--   infix  1 ≃-begin_
+--   infixr 2 _≃⟨_⟩_
+--   infix  3 _≃-∎
+
+--   ≃-begin_ : ∀ {A B : Set}
+--     → A ≃ B
+--       -----
+--     → A ≃ B
+--   ≃-begin A≃B = A≃B
+
+--   _≃⟨_⟩_ : ∀ (A : Set) {B C : Set}
+--     → A ≃ B
+--     → B ≃ C
+--       -----
+--     → A ≃ C
+--   A ≃⟨ A≃B ⟩ B≃C = ≃-trans A≃B B≃C
+
+--   _≃-∎ : ∀ (A : Set)
+--       -----
+--     → A ≃ A
+--   A ≃-∎ = ≃-refl
+
+-- open ≃-Reasoning
+
+Reflexive Type Iso where reflexive = isoRefl
+Transitive Type Iso where transitive = isoTrans
+Preorder Type Iso where
+
+(~~~) : (a, b : Type) -> Type
+(~~~) a b = Iso a b
+
+-- 0
+test : {a,b,c : Type} -> Iso a b -> Iso b c -> Iso a c
+test ab bc = CalcWith {leq = Iso} $
+  |~ a
+  <~ b ... (ab)
+  <~ c ... (bc)
+
+[additive] Semigroup Nat where
+  a <+> b = ?h
+
+[multiplicative] Semigroup Nat where
+  a <+> b = ?h2
+
+-- infix 0 _≲_
+-- record _≲_ (A B : Set) : Set where
+--   field
+--     to      : A → B
+--     from    : B → A
+--     from∘to : ∀ (x : A) → from (to x) ≡ x
+-- open _≲_
+
+-- infixr 100 <=
+
+record (<=) (a, b : Type) where
+  constructor MkEmb
+  to     : a -> b
+  from   : b -> a
+  fromTo : (x : a) -> from (to x) === x
+
+-- (<=) : (a,b : Type) -> Type
+-- (<=) a b = Emb a b
+
+-- -- A deep question from the audience. :)
+-- embIso : {a,b : Type} -> a <= b -> b <= a -> (Iso a b)
+-- embIso = ?xembIso
+
+-- embRefl : {a : Type} -> a <= a
+-- embRefl = ?xembRefl
+
+-- embTrans : {a,b,c : Type} -> a <= b -> b <= c -> a <= c
+-- embTrans = ?xembTrans
+
+-- ≲-antisym : ∀ {A B : Set}
+--   → (A≲B : A ≲ B)
+--   → (B≲A : B ≲ A)
+--   → (to A≲B ≡ from B≲A)
+--   → (from A≲B ≡ to B≲A)
+--     -------------------
+--   → A ≃ B
+-- ≲-antisym A≲B B≲A to≡from from≡to =
+--   record
+--     { to      = to A≲B
+--     ; from    = from A≲B
+--     ; from∘to = from∘to A≲B
+--     ; to∘from = λ{y →
+--         begin
+--           to A≲B (from A≲B y)
+--         ≡⟨ cong (to A≲B) (cong-app from≡to y) ⟩
+--           to A≲B (to B≲A y)
+--         ≡⟨ cong-app to≡from (to B≲A y) ⟩
+--           from B≲A (to B≲A y)
+--         ≡⟨ from∘to B≲A y ⟩
+--           y
+--         ∎}
+--     }
+
+embAntisym
+  :  {a,b : Type}
+  -> (ab : (a <= b)) -> (ba : (b <= a))
+  -> (to ab = from ba) -> (from ab = to ba)
+  -> Iso a b
+-- embAntisym (MkEmb t f ft) (MkEmb (from (MkEmb t f ft)) (to (MkEmb t f ft)) ft1) Refl Refl
+embAntisym (MkEmb t f ft) (MkEmb _ _ ft1) Refl Refl
+  = MkIso t f ft ft1
