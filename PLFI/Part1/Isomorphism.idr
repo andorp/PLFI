@@ -179,9 +179,9 @@ isoTrans ab bc = MkIso
 
 -- open ≃-Reasoning
 
-Reflexive Type Iso where reflexive = isoRefl
+Reflexive  Type Iso where reflexive = isoRefl
 Transitive Type Iso where transitive = isoTrans
-Preorder Type Iso where
+Preorder   Type Iso where
 
 (~~~) : (a, b : Type) -> Type
 (~~~) a b = Iso a b
@@ -193,11 +193,11 @@ test ab bc = CalcWith {leq = Iso} $
   <~ b ... (ab)
   <~ c ... (bc)
 
-[additive] Semigroup Nat where
-  a <+> b = ?h
+-- [additive] Semigroup Nat where
+--   a <+> b = ?h
 
-[multiplicative] Semigroup Nat where
-  a <+> b = ?h2
+-- [multiplicative] Semigroup Nat where
+--   a <+> b = ?h2
 
 -- infix 0 _≲_
 -- record _≲_ (A B : Set) : Set where
@@ -209,11 +209,19 @@ test ab bc = CalcWith {leq = Iso} $
 
 -- infixr 100 <=
 
+-- %hint -- Would be nice to have
 record (<=) (a, b : Type) where
   constructor MkEmb
   to     : a -> b
   from   : b -> a
+  -- %hint : Would be nice to have
   fromTo : (x : a) -> from (to x) === x
+
+%hint
+fromToX : (ab : (a <= b)) -> (x : a) -> ab.from (ab.to x) === x
+fromToX ab x = ab.fromTo x
+
+-- %hint (.to)
 
 -- (<=) : (a,b : Type) -> Type
 -- (<=) a b = Emb a b
@@ -222,11 +230,40 @@ record (<=) (a, b : Type) where
 -- embIso : {a,b : Type} -> a <= b -> b <= a -> (Iso a b)
 -- embIso = ?xembIso
 
--- embRefl : {a : Type} -> a <= a
--- embRefl = ?xembRefl
+embRefl : {a : Type} -> a <= a
+embRefl = MkEmb Prelude.id Prelude.id (\x => Refl)
 
--- embTrans : {a,b,c : Type} -> a <= b -> b <= c -> a <= c
--- embTrans = ?xembTrans
+-- ≲-trans : ∀ {A B C : Set} → A ≲ B → B ≲ C → A ≲ C
+-- ≲-trans A≲B B≲C =
+--   record
+--     { to      = λ{x → to   B≲C (to   A≲B x)}
+--     ; from    = λ{y → from A≲B (from B≲C y)}
+--     ; from∘to = λ{x →
+--         begin
+--           from A≲B (from B≲C (to B≲C (to A≲B x)))
+--         ≡⟨ cong (from A≲B) (from∘to B≲C (to A≲B x)) ⟩
+--           from A≲B (to A≲B x)
+--         ≡⟨ from∘to A≲B x ⟩
+--           x
+--         ∎}
+--      }
+
+embTrans : {a,b,c : Type} -> a <= b -> b <= c -> a <= c
+embTrans ab bc = MkEmb
+  { to   = (bc.to . ab.to)
+  , from = (ab.from . bc.from)
+  , fromTo = \x => Calc $
+      |~ ab.from (bc.from (bc.to (ab.to x)))
+      ~~ ab.from (ab.to x)
+          ... (cong ab.from (bc.fromTo (ab.to x)))
+      ~~ x
+          ... (ab.fromTo x)
+--          ... (fromToX ab x)
+  }
+
+--              ab .from (bc .from (bc .to (ab .to x))) = x
+--   , toFrom = \y => rewrite ab.toFrom (bc.from y) in bc.toFrom y
+
 
 -- ≲-antisym : ∀ {A B : Set}
 --   → (A≲B : A ≲ B)
@@ -260,3 +297,15 @@ embAntisym
 -- embAntisym (MkEmb t f ft) (MkEmb (from (MkEmb t f ft)) (to (MkEmb t f ft)) ft1) Refl Refl
 embAntisym (MkEmb t f ft) (MkEmb _ _ ft1) Refl Refl
   = MkIso t f ft ft1
+
+Reflexive  Type (<=) where reflexive = embRefl
+Transitive Type (<=) where transitive = embTrans
+Preorder   Type (<=) where
+
+embFromIso : {a,b : Type} -> Iso a b -> (a <= b)
+-- Issue in internel meta variable
+-- embFromIso (MkIso to from fromTo toFrom) = MkEmb (\{arg:2022} => to arg) from fromTo
+embFromIso (MkIso to from fromTo toFrom) = MkEmb to from fromTo
+
+-- futumorphism
+
