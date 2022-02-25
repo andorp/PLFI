@@ -52,6 +52,7 @@ namespace Things
 --     to∘from : ∀ (y : B) → to (from y) ≡ y
 -- open _≃_
 
+public export
 record Iso (a, b : Type) where
   constructor MkIso
   to     : a -> b
@@ -76,6 +77,7 @@ record Iso (a, b : Type) where
 --     ; to∘from = λ{y → refl}
 --     }
 
+public export
 isoRefl : {a : Type} -> Iso a a
 isoRefl = MkIso
   { to     = id
@@ -100,6 +102,7 @@ isoTo i = i.to
 --     ; to∘from = from∘to A≃B
 --     }
 
+public export
 isoSym : Iso a b -> Iso b a
 isoSym (MkIso to from fromTo toFrom) = MkIso from to toFrom fromTo
 
@@ -135,6 +138,7 @@ isoSym (MkIso to from fromTo toFrom) = MkIso from to toFrom fromTo
 --         ∎}
 --      }
 
+public export
 isoTrans : {a,b,c : Type} -> Iso a b -> Iso b c -> Iso a c
 isoTrans ab bc = MkIso
   { to     = to bc . to ab
@@ -179,12 +183,13 @@ isoTrans ab bc = MkIso
 
 -- open ≃-Reasoning
 
-Reflexive  Type Iso where reflexive = isoRefl
-Transitive Type Iso where transitive = isoTrans
-Preorder   Type Iso where
+public export Reflexive  Type Iso where reflexive = isoRefl
+public export Transitive Type Iso where transitive = isoTrans
+public export Preorder   Type Iso where
 
-(~~~) : (a, b : Type) -> Type
-(~~~) a b = Iso a b
+public export
+(~~) : (a, b : Type) -> Type
+(~~) a b = Iso a b
 
 -- 0
 test : {a,b,c : Type} -> Iso a b -> Iso b c -> Iso a c
@@ -261,10 +266,6 @@ embTrans ab bc = MkEmb
 --          ... (fromToX ab x)
   }
 
---              ab .from (bc .from (bc .to (ab .to x))) = x
---   , toFrom = \y => rewrite ab.toFrom (bc.from y) in bc.toFrom y
-
-
 -- ≲-antisym : ∀ {A B : Set}
 --   → (A≲B : A ≲ B)
 --   → (B≲A : B ≲ A)
@@ -294,9 +295,7 @@ embAntisym
   -> (ab : (a <= b)) -> (ba : (b <= a))
   -> (to ab = from ba) -> (from ab = to ba)
   -> Iso a b
--- embAntisym (MkEmb t f ft) (MkEmb (from (MkEmb t f ft)) (to (MkEmb t f ft)) ft1) Refl Refl
-embAntisym (MkEmb t f ft) (MkEmb _ _ ft1) Refl Refl
-  = MkIso t f ft ft1
+embAntisym (MkEmb t f ft) (MkEmb _ _ ft1) Refl Refl = MkIso t f ft ft1
 
 Reflexive  Type (<=) where reflexive = embRefl
 Transitive Type (<=) where transitive = embTrans
@@ -306,6 +305,3 @@ embFromIso : {a,b : Type} -> Iso a b -> (a <= b)
 -- Issue in internel meta variable
 -- embFromIso (MkIso to from fromTo toFrom) = MkEmb (\{arg:2022} => to arg) from fromTo
 embFromIso (MkIso to from fromTo toFrom) = MkEmb to from fromTo
-
--- futumorphism
-
