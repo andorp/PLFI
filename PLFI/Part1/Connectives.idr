@@ -2,6 +2,7 @@ module PLFI.Part1.Connectives
 
 import Data.Fin
 import PLFI.Part1.Isomorphism
+import Syntax.PreorderReasoning.Generic
 
 -- data _×_ (A B : Set) : Set where
 
@@ -131,7 +132,6 @@ prodAssoc = MkIso
 
 data T : Type where
   TT : T
-
      
 -- ------ T-I
 -- TT : T
@@ -145,6 +145,47 @@ data T : Type where
 -- c -> T -> c
 -- c -> c
 
+-- ⊤-identityˡ : ∀ {A : Set} → ⊤ × A ≃ A
+-- ⊤-identityˡ =
+--   record
+--     { to      = λ{ ⟨ tt , x ⟩ → x }
+--     ; from    = λ{ x → ⟨ tt , x ⟩ }
+--     ; from∘to = λ{ ⟨ tt , x ⟩ → refl }
+--     ; to∘from = λ{ x → refl }
+--     }
+
+ttIdentityL : {a : Type} -> Iso (T, a) a
+ttIdentityL = MkIso
+  { to     = \(TT,y) => y
+  , from   = \x => (TT, x)
+  , fromTo = \(TT,y) => Refl
+  , toFrom = \y => Refl
+  }
+
+-- ⊤-identityʳ : ∀ {A : Set} → (A × ⊤) ≃ A
+-- ⊤-identityʳ {A} =
+--   ≃-begin
+--     (A × ⊤)
+--   ≃⟨ ×-comm ⟩
+--     (⊤ × A)
+--   ≃⟨ ⊤-identityˡ ⟩
+--     A
+--   ≃-∎
+
+-- 0
+test3 : {a,b,c : Type} -> Iso a b -> Iso b c -> Iso a c
+test3 ab bc = CalcWith {leq = Iso} $
+  |~ a
+  <~ b ... (ab)
+  <~ c ... (bc)
+
+ttIdentityR : {a : Type} -> Iso (a,T) a
+ttIdentityR = CalcWith {leq = Iso} $
+  |~ (a, T)
+  <~ (T, a)  ... prodComm
+  <~ a       ... ttIdentityL
+
+-- Same as Either, we are going to use Either
 data Sum : Type -> Type -> Type where
   L : a -> Sum a b
   R : b -> Sum a b
@@ -162,3 +203,65 @@ data Sum : Type -> Type -> Type where
 -- Sum a b , (a -> c) , (b -> c)
 -- ----------------------------- Sum-E
 --              c 
+
+-- case-⊎ : ∀ {A B C : Set}
+--   → (A → C)
+--   → (B → C)
+--   → A ⊎ B
+--     -----------
+--   → C
+-- case-⊎ f g (inj₁ x) = f x
+-- case-⊎ f g (inj₂ y) = g y
+
+-- either
+
+-- η-⊎ : ∀ {A B : Set} (w : A ⊎ B) → case-⊎ inj₁ inj₂ w ≡ w
+-- η-⊎ (inj₁ x) = refl
+-- η-⊎ (inj₂ y) = refl
+
+either2 : (b -> c) -> (a -> c) -> Either a b -> c
+either2 f g (Left x) = g x
+either2 f g (Right x) = f x
+
+etaEither : {a,b : Type} -> (w : Either a b) -> either Left Right w = w
+etaEither (Left x) = Refl
+etaEither (Right x) = Refl
+
+
+testData1 : Either () Nat
+testData1 = Right 1
+
+test1 : Bool
+test1 = either Left Right testData1 == (Right 1)
+
+testData2 : Either Nat ()
+testData2 = Left 2
+
+test4 : Bool
+test4 = either Left Right testData2 == (Left 2)
+
+-- uniq-⊎ : ∀ {A B C : Set} (h : A ⊎ B → C) (w : A ⊎ B) →
+--   case-⊎ (h ∘ inj₁) (h ∘ inj₂) w ≡ h w
+-- uniq-⊎ h (inj₁ x) = refl
+-- uniq-⊎ h (inj₂ y) = refl
+
+uniqEither
+  :  {a,b,c : Type} -> (h : Either a b -> c) -> (w : Either a b)
+  -> either (h . Left) (h . Right) w = h w
+uniqEither h (Left x) = Refl
+uniqEither h (Right x) = Refl
+
+-- test5 : let t = Nat = Nat in Either t t
+-- test5 = Left Refl
+
+commEither : Iso (Either a b) (Either b a)
+commEither = MkIso
+  { to     = either Right Left
+  , from   = either Right Left
+  , fromTo = \case
+                (Left x) => Refl
+                (Right x) => Refl
+  , toFrom = \case
+                (Left x) => Refl
+                (Right x) => Refl
+  }
