@@ -265,3 +265,66 @@ commEither = MkIso
                 (Left x) => Refl
                 (Right x) => Refl
   }
+
+assocEither : Iso (Either (Either a b) c) (Either a (Either b c))
+assocEither = MkIso
+  { to     = either (either Left (Right . Left)) (Right . Right)
+  , from   = either (Left . Left) (either (Left . Right) Right)
+  , fromTo = \case
+                (Left (Left x))   => Refl
+                (Left (Right x))  => Refl
+                (Right x)         => Refl
+  , toFrom = \case
+                (Left x)          => Refl
+                (Right (Left x))  => Refl
+                (Right (Right x)) => Refl
+  }
+
+-- Couldn't parse any alternatives:
+-- 1: Expected name.
+-- ... (1 others)idris2
+-- data G : Type where
+--   { MkG : G
+--   } -- c)
+
+-- Without where clause it means something else, we declare this type, but we don't define it yet.
+-- data F : Type          a)
+-- declare data F : Type  a)
+
+-- Suggestions for definition of empty type
+-- data F : Type where -- b)
+
+-- data F : Type where -- c)
+--   impossible
+
+-- data F : Type empty -- d)
+
+-- data F : Type impossible -- e)
+
+-- data F : Type where {}
+
+data F : Type where -- c)
+
+fElim : {0 a : Type} -> F -> a
+fElim x impossible
+
+fElim' : {a : Type} -> F -> a
+fElim' = \x => case x of {} -- \case leads to a parse error
+
+-- uniq-⊥ : ∀ {C : Set} (h : ⊥ → C) (w : ⊥) → ⊥-elim w ≡ h w
+-- uniq-⊥ h ()
+
+uniqF : {c : Type} -> (h : F -> c) -> (w : F) -> fElim w = h w
+uniqF h w impossible
+
+-- ⊥-identityˡ
+
+fIdentityL : Iso (Either F a) a
+fIdentityL = MkIso
+  { to     = either fElim id
+  , from   = Right
+  , fromTo = \case
+                (Left x) => fElim x
+                (Right x) => Refl
+  , toFrom = \y => Refl
+  }
