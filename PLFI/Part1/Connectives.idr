@@ -328,3 +328,66 @@ fIdentityL = MkIso
                 (Right x) => Refl
   , toFrom = \y => Refl
   }
+
+fIdentityR : Iso (Either a F) a
+fIdentityR = isoTrans commEither fIdentityL
+
+-- η-→ : ∀ {A B : Set} (f : A → B) → (λ (x : A) → f x) ≡ f
+-- η-→ f = refl
+
+
+-- TODO: Ask
+--    a : Type
+--    b : Type
+--    f : a -> b
+-- ------------------------------
+-- xx : (\x => f x) = f
+etaFun : {a,b : Type} -> (f : a -> b) -> (\x => f x) = f
+etaFun f = ?xx --- Refl
+
+--    a : Type
+--    b : Type
+--    f : a -> b
+-- ------------------------------
+-- xRefl : (\x => f x) = (\y => f y)
+alphaFun : {a,b : Type} -> (f : a -> b) -> (\x => f x) = (\y => f y)
+alphaFun f = Refl
+
+-- Under the hood terms are normalized for alpha/eta equivalence?
+alphaFun2 : {a,b,c : Type} -> (f : a -> b -> c) -> (z : b) -> (\x => f x z) = (\y => f y z)
+alphaFun2 f z = Refl
+
+betaFun : (y : Nat) -> (\x => x * x) y = y * y
+betaFun y = Refl
+
+namespace Newtype12
+
+  export
+  Person : Type
+  Person = (String, Int)
+
+  public export
+  mkPerson : (String, Int) -> Person
+  mkPerson = id
+
+  public export
+  unPerson : Person -> (String, Int)
+  unPerson = id
+
+  export
+  0
+  samePersonLemma : (p : Person) -> (mkPerson (unPerson p)) = p
+  samePersonLemma p = Refl
+
+  -- export
+  -- samePersonLemma
+
+test5 : Person
+test5 = mkPerson ("Andor", 23)
+
+-- samePersonLemma : (p : Person) -> (mkPerson (unPerson p)) = p
+-- samePersonLemma p = Refl
+
+samePersonLemmaR : (p : (String, Int)) -> (unPerson (mkPerson p) = p)
+samePersonLemmaR p = ?h1_0
+
