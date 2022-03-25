@@ -139,7 +139,7 @@ isoSym (MkIso to from fromTo toFrom) = MkIso from to toFrom fromTo
 --      }
 
 public export
-isoTrans : {a,b,c : Type} -> Iso a b -> Iso b c -> Iso a c
+isoTrans : Iso a b -> Iso b c -> Iso a c
 isoTrans ab bc = MkIso
   { to     = to bc . to ab
   , from   = from ab . from bc

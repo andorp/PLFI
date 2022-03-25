@@ -49,8 +49,6 @@ test8 = MkDPair 3 MkSx
 -- test8 = MkSigma 3 MkSx
 
 -- η-× : ∀ {A B : Set} (w : A × B) → ⟨ proj₁ w , proj₂ w ⟩ ≡ w
--- η-× ⟨ x , y ⟩ = refl
-
 etaTuple : {a,b : Type} -> (w : (a, b)) -> (fst w, snd w) === w
 etaTuple (x, y) = Refl
 
@@ -216,8 +214,6 @@ data Sum : Type -> Type -> Type where
 -- either
 
 -- η-⊎ : ∀ {A B : Set} (w : A ⊎ B) → case-⊎ inj₁ inj₂ w ≡ w
--- η-⊎ (inj₁ x) = refl
--- η-⊎ (inj₂ y) = refl
 
 either2 : (b -> c) -> (a -> c) -> Either a b -> c
 either2 f g (Left x) = g x
@@ -241,10 +237,6 @@ test4 : Bool
 test4 = either Left Right testData2 == (Left 2)
 
 -- uniq-⊎ : ∀ {A B C : Set} (h : A ⊎ B → C) (w : A ⊎ B) →
---   case-⊎ (h ∘ inj₁) (h ∘ inj₂) w ≡ h w
--- uniq-⊎ h (inj₁ x) = refl
--- uniq-⊎ h (inj₂ y) = refl
-
 uniqEither
   :  {a,b,c : Type} -> (h : Either a b -> c) -> (w : Either a b)
   -> either (h . Left) (h . Right) w = h w
@@ -343,7 +335,7 @@ fIdentityR = isoTrans commEither fIdentityL
 -- ------------------------------
 -- xx : (\x => f x) = f
 etaFun : {a,b : Type} -> (f : a -> b) -> (\x => f x) = f
-etaFun f = ?xx --- Refl
+etaFun f = Refl
 
 --    a : Type
 --    b : Type
@@ -391,3 +383,40 @@ test5 = mkPerson ("Andor", 23)
 samePersonLemmaR : (p : (String, Int)) -> (unPerson (mkPerson p) = p)
 samePersonLemmaR p = ?h1_0
 
+handwaving : {t : Type} -> (a : t) -> (b : t) -> (a = b)
+handwaving a b = believe_me (the (a=a) Refl)
+
+namespace Postulate
+
+  export
+  extensionality : {a,b : Type} -> {f,g : a -> b} -> ((x : a) -> f x = g x) -> f = g
+  extensionality _ = handwaving f g
+
+-- currying : ∀ {A B C : Set} → (A → B → C) ≃ (A × B → C)
+currying : {a,b,c : Type} -> Iso (a -> b -> c) ((a,b) -> c)
+currying = MkIso
+  { to      = \f => \(x,y) => f x y
+  , from    = \f => \x => \y => f (x, y)
+  , fromTo  = \f => Refl
+  , toFrom  = \g => extensionality (\(x,y) => Refl)
+  }
+
+-- c ^ (a + b) ~ c ^ a * c ^ b
+-- →-distrib-⊎ : ∀ {A B C : Set} → (A ⊎ B → C) ≃ ((A → C) × (B → C))
+distribFunOverSumR : {a,b,c : Type} -> Iso (Either a b -> c) (a -> c, b -> c)
+distribFunOverSumR = MkIso
+  { to     = \f     => (f . Left, f . Right)
+  , from   = \(f,g) => either f g
+  , fromTo = \f     => extensionality (\case { Left x => Refl ; Right y => Refl })
+  , toFrom = \(f,g) => Refl
+  }
+
+-- →-distrib-× : ∀ {A B C : Set} → (A → B × C) ≃ (A → B) × (A → C)
+-- (p * n) ^ m = (p ^ m) * (n ^ m)
+distribFunOverProdL : {a,b,c : Type} -> Iso (a -> (b,c)) (a -> b, a -> c)
+distribFunOverProdL = MkIso
+  { to     = \f     => (fst . f, snd . f)
+  , from   = \(f,g) => \x => (f x, g x)
+  , fromTo = \f     => extensionality (\x => etaTuple (f x)) -- TODO: Next time cong
+  , toFrom = \(f,g) => Refl
+  }
