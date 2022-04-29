@@ -420,3 +420,42 @@ distribFunOverProdL = MkIso
   , fromTo = \f     => extensionality (\x => etaTuple (f x)) -- TODO: Next time cong
   , toFrom = \(f,g) => Refl
   }
+
+-- →-distrib-× : ∀ {A B C : Set} → (A → B × C) ≃ (A → B) × (A → C)
+-- (p * n) ^ m = (p ^ m) * (n ^ m)
+distribFunOverProdL2 : {a,b,c : Type} -> Iso (a -> (b,c)) (a -> b, a -> c)
+distribFunOverProdL2 = MkIso
+  { to     = \f     => (fst . f, snd . f)
+  , from   = \(f,g) => \x => (f x, g x)
+  , fromTo = \f     => extensionality (\x => cong id (cong id (cong id (etaTuple (f x)))))
+  , toFrom = \(f,g) => Refl
+  }
+
+-- ×-distrib-⊎ : ∀ {A B C : Set} → (A ⊎ B) × C ≃ (A × C) ⊎ (B × C)
+distribProdOverSum  : {a,b,c : Type} -> Iso (Either a b, c) (Either (a,c) (b,c))
+distribProdOverSum = MkIso
+  { to = \(x,y) => bimap (,y) (,y) x
+  , from = either (mapFst Left) (mapFst Right)
+  -- , fromTo = \(x, y) => either (\z => ?h1) ?h2 x -- (const Refl) (const Refl) x
+  , fromTo = \(x, y) => case x of
+                (Left z) => Refl
+                (Right z) => Refl
+  , toFrom = \case
+                (Left (x, y)) => Refl
+                (Right (x, y)) => Refl
+  }
+
+-- ⊎-distrib-× : ∀ {A B C : Set} → (A × B) ⊎ C ≲ (A ⊎ C) × (B ⊎ C)
+weakDistribSumOverProd : {a,b,c : Type} -> (Either (a,b) c) <= (Either a c, Either b c)
+weakDistribSumOverProd = MkEmb
+  { to = \case
+            (Left (x, y)) => (Left x, Left y)
+            (Right x) => (Right x, Right x)
+  , from = \case
+              ((Right x), y        ) => Right x
+              ((Left x) , (Right y)) => Right y
+              ((Left x) , (Left y) ) => Left (x, y)
+  , fromTo = \case
+                (Left (x, y)) => Refl
+                (Right x) => Refl
+  }

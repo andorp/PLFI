@@ -215,6 +215,7 @@ test ab bc = CalcWith {leq = Iso} $
 -- infixr 100 <=
 
 -- %hint -- Would be nice to have
+public export
 record (<=) (a, b : Type) where
   constructor MkEmb
   to     : a -> b
