@@ -1,7 +1,11 @@
 module PLFI.Part1.Negation
 
+import Control.Function.FunExt
+
 -- ¬_ : Set → Set
 -- ¬ A = A → ⊥
+
+%default total
 
 %hide Prelude.Not
 
@@ -63,3 +67,53 @@ contraposition = flip (.)
 Neq : a -> a -> Type
 Neq x y = Not (x === y)
 -- Neq = (Not .) . (===)
+
+-- _ : 1 ≢ 2
+-- _ = λ()
+
+-- PLFI.Part1.Negation.h1 : 1 = 2 -> Void
+ex1 : Neq (S Z) (S (S Z))
+-- ex1 = ?h1 -- x impossible
+-- ex1 Refl impossible
+ex1 x impossible
+
+-- PLFI.Part1.Negation.h2 : () = Nat -> Void
+ex2 : Neq Unit Nat
+-- ex2 = ?h2 -- Refl impossible -- wat?
+ex2 Refl impossible
+-- ex2 x impossible -- ex2 x is not a valid impossible case.
+
+Neq2 : a -> b -> Type
+Neq2 x y = Not (x ~=~ y)
+
+-- PLFI.Part1.Negation.h3 : () = 0 -> Void
+ex3 : Neq2 Unit Z
+ex3 = ?h3 -- x impossible
+
+-- peano : ∀ {m : ℕ} → zero ≢ suc m
+-- peano = λ()
+
+peano : {m : Nat} -> Neq Z (S m)
+peano Refl impossible
+
+-- id : ⊥ → ⊥
+-- id x = x
+-- 
+-- id′ : ⊥ → ⊥
+-- id′ ()
+
+id1 : Void -> Void
+id1 x = x
+
+id2 : Void -> Void
+id2 x impossible
+
+0
+id1_id2 : FunExt => Negation.id1 === Negation.id2
+-- id1_id2 = funExt (\x => case x of {})
+id1_id2 = funExt (\x => absurd x)
+-- id1_id2 = funExt absurd
+
+0
+h : FunExt => (f : Void -> a) -> (g : Void -> a) -> f === g
+h f g = funExt (\x => absurd x)
