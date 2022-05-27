@@ -172,6 +172,7 @@ multMonoLTE
 
 infix 4 <
 
+public export
 data (<) : N -> N -> Type where
 
   ZeroLT
