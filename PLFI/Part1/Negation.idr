@@ -145,10 +145,20 @@ ltIrreflexive1 (Suc m) (SucLT x) = ltIrreflexive1 m x
 -- Exercise trichotomy (practice)
 -- Show that strict inequality satisfies trichotomy, that is, for any naturals m and n exactly one of the following holds:
 
+public export
 data Trichotomy : N -> N -> Type where
   LT : m < n -> Trichotomy m n
   EQ : m = n -> Trichotomy m n
   GT : n < m -> Trichotomy m n
+
+mkTrichotomy : (m, n : N) -> Trichotomy m n
+mkTrichotomy Zero    Zero     = EQ Refl
+mkTrichotomy Zero    (Suc _)  = LT ZeroLT
+mkTrichotomy (Suc _) Zero     = GT ZeroLT
+mkTrichotomy (Suc m) (Suc n)  = case (mkTrichotomy m n) of
+  (LT mn) => LT (SucLT mn)
+  (EQ mm) => EQ (cong Suc mm)
+  (GT nm) => GT (SucLT nm)
 
 uniquenessOfEq : {a : Type} -> (n,m : a) -> (x,y : n === m) -> x === y
 uniquenessOfEq n n Refl Refl = Refl
@@ -177,10 +187,50 @@ trichotomy m n (GT x) (LT y) = absurd (lessNotGreaterLemma x y)
 trichotomy m n (GT x) (EQ p) = absurd (lessNotEqualLemma x (sym p))
 trichotomy m n (GT x) (GT y) = cong GT (uniquenessOfLT n m x y)
 
+public export
 data Trichotomy1 : N -> N -> Type where
   LT1 :      (m < n)  -> (Not (m = n)) -> (Not (n < m)) -> Trichotomy1 m n
   EQ1 : (Not (m < n)) ->      (m = n)  -> (Not (n < m)) -> Trichotomy1 m n
-  GT1 : (Not (n < m)) -> (Not (m = n)) ->      (n < m)  -> Trichotomy1 m n
+  GT1 : (Not (m < n)) -> (Not (m = n)) ->      (n < m)  -> Trichotomy1 m n
 
+{n,m : N} -> Show (Trichotomy1 n m) where
+  show (LT1 x f g)   = "LT1"
+  show (EQ1 f prf g) = "EQ1"
+  show (GT1 f g x)   = "GT1"
+
+-- ISSUE: No warning about this.
+-- When its not referred, this was optimized away.
 lemma1 : (n < m) -> (Not (n = m), Not (m < n))
 lemma2 : (m = n) -> (Not (n < m), Not (m < n))
+lemma3 : Void
+
+to1 : Trichotomy n m -> Trichotomy1 n m
+to1 (LT x) = LT1 x (lessNotEqualLemma x) (lessNotGreaterLemma x)
+to1 (EQ x) = EQ1 (flip lessNotEqualLemma x) x (flip lessNotEqualLemma (sym x))
+to1 (GT x) = GT1 (lessNotGreaterLemma x) (\y => lessNotEqualLemma x (sym y)) x
+
+to2 : Trichotomy n m -> Trichotomy1 n m
+to2 (LT x) = LT1 x (fst (lemma1 x)) (snd (lemma1 x))
+to2 (EQ x) = EQ1 (snd (lemma2 x)) x (fst (lemma2 x))
+to2 (GT x) = GT1 (snd (lemma1 x)) (\y => fst (lemma1 x) (sym y)) x
+
+-- ISSUE of not reporting, even when it used.
+g : N -> N
+
+h1 : Trichotomy n m -> Trichotomy (const 1 (g n)) (const 2 (g m))
+h1 (LT x) = mkTrichotomy 1 2
+h1 (EQ x) = mkTrichotomy 1 2
+h1 (GT x) = mkTrichotomy 1 2
+
+export
+test : IO ()
+test = do
+  putStrLn "to1"
+  printLn $ to1 $ mkTrichotomy 3 4
+  printLn $ to1 $ mkTrichotomy 4 4
+  printLn $ to1 $ mkTrichotomy 3 1
+  printLn $ to1 $ h1 $ mkTrichotomy 3 1
+  -- putStrLn "to2"
+  -- printLn $ to2 $ mkTrichotomy 3 4
+  -- printLn $ to2 $ mkTrichotomy 4 4
+  -- printLn $ to2 $ mkTrichotomy 3 1

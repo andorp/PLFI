@@ -18,4 +18,4 @@ main = do
   putStrLn "[x] Part1.Isomorphism"
   putStrLn "[x] Part1.Connectives"
   putStrLn "[ ] Part1.Negation"
-
+  Part1.Negation.test
