@@ -5,7 +5,7 @@ import Data.DPair
 
 import PLFI.Part1.Relations
 import PLFI.Part1.Naturals
-
+import PLFI.Part1.Isomorphism
 
 -- ¬_ : Set → Set
 -- ¬ A = A → ⊥
@@ -234,3 +234,45 @@ test = do
   -- printLn $ to2 $ mkTrichotomy 3 4
   -- printLn $ to2 $ mkTrichotomy 4 4
   -- printLn $ to2 $ mkTrichotomy 3 1
+
+-- ¬ (A ⊎ B) ≃ (¬ A) × (¬ B)
+deMorganLaw1 : FunExt => Iso (Not (Either a b)) (Not a, Not b)
+deMorganLaw1 = MkIso
+  { to     = \f => (f . Left, f . Right)
+  , from   = \(f,g) , x => case x of
+                (Left y)  => f y
+                (Right y) => g y
+  , fromTo = \f => funExt (\case
+                            (Left x)  => Refl
+                            (Right x) => Refl)
+  , toFrom = \(f,g) => Refl -- (\x => f x, \x => g x) = (f, g)
+  }
+
+-- ¬ (A × B) ≃ (¬ A) ⊎ (¬ B)
+deMorganLaw2 : Iso (Not (a,b)) (Either (Not a) (Not b))
+deMorganLaw2 = MkIso
+  { to     = \f => ?h2
+    --  0 b : Type
+    --  0 a : Type
+    --    f : (a, b) -> Void
+    -- ------------------------------
+    -- h2 : Either (a -> Void) (b -> Void)  
+  , from   = ?h3
+  , fromTo = ?h4
+  , toFrom = ?h5
+  }
+
+deMorganLaw3 : Either (Not a) (Not b) -> Not (a,b)
+deMorganLaw3 (Left f) (a, b)  = f a
+deMorganLaw3 (Right g) (a, b) = g b
+
+-- postulate
+--   em : ∀ {A : Set} → A ⊎ ¬ A
+
+public export
+interface ExcludedMiddle where
+  em : {a : Type} -> Either a (Not a)
+
+-- em-irrefutable : ∀ {A : Set} → ¬ ¬ (A ⊎ ¬ A)
+emIrrefutable : {a : Type} -> Not (Not (Either a (Not a)))
+emIrrefutable f = f (Right (\a => f (Left a)))
