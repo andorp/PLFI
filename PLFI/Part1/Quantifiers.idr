@@ -100,3 +100,60 @@ sumForallImpliesForallSum : {b,c : a -> Type} -> (Either ((x : a) -> b x) ((x : 
 sumForallImpliesForallSum (Left  f) x = Left (f x)
 sumForallImpliesForallSum (Right f) x = Right (f x)
 
+data Sigma : (a : Type) -> (b : a -> Type) -> Type where
+  MkSigma : (x : a) -> b x -> Sigma a b
+
+record Sigma' (a : Type) (b : a -> Type) where
+  constructor MkSigma'
+  proj1 : a
+  proj2 : b proj1
+
+Ex : {a : Type} -> (b : a -> Type) -> Type
+Ex {a} b = Sigma a b
+
+eElim
+  :  ((x : a) -> (b x) -> c)
+  -> Ex b
+  --------------------------
+  -> c
+eElim f (MkSigma x y) = f x y
+
+toF : ((x : a) -> b x -> c) -> (Sigma a b) -> c
+toF f = \(MkSigma x y) => f x y
+
+fromF : (Sigma a b -> c) -> (x : a) -> b x -> c
+fromF f = \x , y => f (MkSigma x y)
+
+toFromF : FunExt => (f : (Sigma a b -> c)) -> toF (fromF f) === f
+toFromF f = funExt (\(MkSigma x y) => Refl)
+
+fromToF : FunExt => {b : a -> Type} -> (f : ((x : a) -> b x -> c)) -> fromF (toF f) === f
+fromToF f = funExt (\x => funExt (\y => Refl))
+
+forallExsist : FunExt => {b : a -> Type} -> Iso ((x : a) -> b x -> c) (Ex b -> c)
+forallExsist = MkIso
+  { to     = toF
+  , from   = fromF
+  , toFrom = toFromF
+  , fromTo = fromToF
+  }
+
+-- postulate
+--   ∃-distrib-⊎ : ∀ {A : Set} {B C : A → Set} →
+--     ∃[ x ] (B x ⊎ C x) ≃ (∃[ x ] B x) ⊎ (∃[ x ] C x)
+
+existsDistribEither : {a : Type} -> {b, c : a -> Type} -> Iso (Ex (\x => Either (b x) (c x))) (Either (Ex (\x => b x)) (Ex (\x => c x)))
+existsDistribEither = MkIso
+  { to = \case
+          (MkSigma a (Left x)) => Left (MkSigma a x)
+          (MkSigma a (Right x)) => Right (MkSigma a x)
+  , from = \case
+            (Left (MkSigma x y)) => MkSigma x (Left y)
+            (Right (MkSigma x y)) => MkSigma x (Right y)
+  , toFrom = \case
+              (Left (MkSigma x y)) => Refl
+              (Right (MkSigma x y)) => Refl
+  , fromTo = \case
+              (MkSigma x (Left y)) => Refl
+              (MkSigma x (Right y)) => Refl
+  }
