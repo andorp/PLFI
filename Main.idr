@@ -7,6 +7,7 @@ import PLFI.Part1.Equality
 import PLFI.Part1.Isomorphism
 import PLFI.Part1.Connectives
 import PLFI.Part1.Negation
+import PLFI.Part1.Decidable
 
 
 main : IO ()
@@ -17,5 +18,6 @@ main = do
   putStrLn "[x] Part1.Equality"
   putStrLn "[x] Part1.Isomorphism"
   putStrLn "[x] Part1.Connectives"
-  putStrLn "[ ] Part1.Negation"
+  putStrLn "[x] Part1.Negation"
+  putStrLn "[ ] Part1.Decidable"
   Part1.Negation.test

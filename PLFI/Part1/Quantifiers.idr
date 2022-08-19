@@ -142,7 +142,9 @@ forallExsist = MkIso
 --   ∃-distrib-⊎ : ∀ {A : Set} {B C : A → Set} →
 --     ∃[ x ] (B x ⊎ C x) ≃ (∃[ x ] B x) ⊎ (∃[ x ] C x)
 
-existsDistribEither : {a : Type} -> {b, c : a -> Type} -> Iso (Ex (\x => Either (b x) (c x))) (Either (Ex (\x => b x)) (Ex (\x => c x)))
+existsDistribEither
+  :  {a : Type} -> {b, c : a -> Type}
+  -> Iso (Ex (\x => Either (b x) (c x))) (Either (Ex (\x => b x)) (Ex (\x => c x)))
 existsDistribEither = MkIso
   { to = \case
           (MkSigma a (Left x)) => Left (MkSigma a x)
@@ -157,3 +159,74 @@ existsDistribEither = MkIso
               (MkSigma x (Left y)) => Refl
               (MkSigma x (Right y)) => Refl
   }
+
+-- postulate
+--   ∃×-implies-×∃ : ∀ {A : Set} {B C : A → Set} →
+--     ∃[ x ] (B x × C x) → (∃[ x ] B x) × (∃[ x ] C x)
+
+existsImpliesExists
+  :  {a : Type} -> {b,c : a -> Type}
+  -> Iso (Ex (\x => (b x, c x))) (Ex (\x => (b x)), Ex (\x => (c x)))
+existsImpliesExists = MkIso
+  { to = \case
+            (MkSigma a (x, y)) => (MkSigma a x, MkSigma a y)
+  , from = \case
+            ((MkSigma a1 x), (MkSigma a2 y)) => MkSigma a2 (?x, ?eie2_7)
+    -- This does not hold, because when we have a1 and a2 they are not necessary the same
+    -- meaning that we can not create the ∃[ x ] (B x × C x) part.
+  , toFrom = ?eie3
+  , fromTo = ?eie4
+  }
+
+mutual
+
+  data Even : Nat -> Type where
+    EZ : Even Z
+    ES : Odd n -> Even (S n)
+  
+  data Odd : Nat -> Type where
+    OS : Even n -> Odd (S n)
+
+mutual
+  evenEx : {n : Nat} -> Even n -> Ex (\m => (m * 2 === n))
+  evenEx EZ = MkSigma 0 Refl
+  evenEx (ES x) with (oddEx x)
+    _ | MkSigma m Refl = MkSigma (S m) Refl
+  
+  oddEx : {n : Nat} -> Odd n -> Ex (\m => (1 + m * 2 === n))
+  oddEx (OS x) with (evenEx x)
+    _ | MkSigma m Refl = MkSigma m Refl
+  
+mutual
+  exEven : {n : Nat} -> Ex (\m => m * 2 === n) -> Even n
+  exEven (MkSigma 0     Refl) = EZ
+  exEven (MkSigma (S m) Refl) = ES (exOdd (MkSigma m Refl))
+
+  exOdd  : {n : Nat} -> Ex (\m => 1 + (m * 2) === n) -> Odd n
+  exOdd (MkSigma m Refl) = OS (exEven (MkSigma m Refl))
+
+-- ¬∃≃∀¬ : ∀ {A : Set} {B : A → Set}
+--   → (¬ ∃[ x ] B x) ≃ ∀ x → ¬ B x
+
+notExIsoAllNot
+  :  FunExt
+  => {a : Type} -> {b : a -> Type}
+  -> Iso (Not (Ex (\x => b x))) ((x : a) -> Not (b x))
+notExIsoAllNot = MkIso
+  { to = \ nExy , x , y => nExy (MkSigma x y)
+  , from = \ anxy , (MkSigma x y) => anxy x y
+  , fromTo = \ nExy => funExt (\ (MkSigma x y) => Refl)
+  , toFrom = \ anxy => Refl
+  }
+
+-- postulate
+--   ∃¬-implies-¬∀ : ∀ {A : Set} {B : A → Set}
+--     → ∃[ x ] (¬ B x)
+--       --------------
+--     → ¬ (∀ x → B x)
+
+exNotImpliesNotAll
+  :  {a : Type} -> {b : a -> Type}
+  -> (Ex (\x => (Not (b x))))
+  -> Not ((x : a) -> b x)
+exNotImpliesNotAll (MkSigma x y) fx = y (fx x)
