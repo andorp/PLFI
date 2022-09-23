@@ -27,9 +27,9 @@ lteToLTE 0      n     ()  = Z
 lteToLTE (S m)  0     v   = void v
 lteToLTE (S m)  (S n) x   = S (lteToLTE m n x)
 
-ltFromLT : {m, n : Nat} -> LTE m n -> T (lte m n)
-ltFromLT Z     = ()
-ltFromLT (S x) = ltFromLT x
+lteFromLTE : {m, n : Nat} -> LTE m n -> T (lte m n)
+lteFromLTE Z     = ()
+lteFromLTE (S x) = lteFromLTE x
 
 data Dec : Type -> Type where
   Yes : a       -> Dec a
@@ -122,11 +122,16 @@ namespace Exercise2
 -- _≤?′_ : ∀ (m n : ℕ) → Dec (m ≤ n)
 
 lteDec2 : (m, n : Nat) -> Dec (LTE m n)
-lteDec2 m n = ?lteDec2_rhs
+lteDec2 m n with (lteToLTE m n, lteFromLTE {m=m} {n=n})
+  _ | (p,q) with (lte m n)
+    _ | True  = Yes (p ())
+    _ | False = No q
 
-
--- lteDec2 m n with (lte m n)
---   _ | True with (lteToLTE m n)
---     _ | p = ?lteDec2_rhsa
---   _ | False = ?lteDec2_rhsb
-
+-- Why do we need to spell out the 'p' in the DepPair?
+lteDec3 : (m, n : Nat) -> Dec (LTE m n)
+lteDec3 m n with (MkDPair
+                    {p = \lte => (T lte -> LTE m n, LTE m n -> T lte)}
+                    (lte m n)
+                    (lteToLTE m n, lteFromLTE {m=m} {n=n}))
+  _ | (True ** (p, q)) = Yes (p ())
+  _ | (False ** (p, q)) = No q
