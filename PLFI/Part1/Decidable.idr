@@ -135,3 +135,133 @@ lteDec3 m n with (MkDPair
                     (lteToLTE m n, lteFromLTE {m=m} {n=n}))
   _ | (True ** (p, q)) = Yes (p ())
   _ | (False ** (p, q)) = No q
+
+lteDec4 : (m, n : Nat) -> Dec (LTE m n)
+lteDec4 m n with (lteToLTE m n)
+  _ | p with (lteFromLTE {m=m} {n=n})
+    _ | q with (lte m n)
+      _ | True  = Yes (p ())
+      _ | False = No q
+
+lteDec5 : (m, n : Nat) -> Dec (LTE m n)
+lteDec5 m n with (lteToLTE m n) | (lteFromLTE {m=m} {n=n})
+  _ | p | q with (lte m n)
+    _ | True  = Yes (p ())
+    _ | False = No q
+
+-- * Logical connectives
+
+and : Bool -> Bool -> Bool
+and False False = False
+and False True  = False
+and True  False = False
+and True  True  = True
+
+and' : Bool -> Lazy Bool -> Bool
+and' False y = False
+and' True False = False
+and' True True  = True
+
+prodDec : Dec a -> Dec b -> Dec (a, b)
+prodDec (Yes x) (Yes y) = Yes (x, y)
+prodDec (Yes x) (No ny) = No (\(x0,y0) => ny y0)
+prodDec (No nx) y       = No (\(x0,y0) => nx x0)
+
+or : Bool -> Bool -> Bool
+or False False = False
+or False True  = True
+or True  False = True
+or True  True  = True
+
+sumDec : Dec a -> Dec b -> Dec (Either a b)
+sumDec (Yes x) y       = Yes (Left x)
+sumDec (No nx) (Yes x) = Yes (Right x)
+sumDec (No nx) (No ny) = No (either nx ny)
+
+not : Bool -> Bool
+not False = True
+not True = False
+
+negateDec : Dec a -> Dec (Not a)
+negateDec (Yes a) = No (\f => f a)
+negateDec (No na) = Yes na
+
+impl : Bool -> Bool -> Bool
+impl False _      = True
+impl True  False  = False
+impl True  True   = True
+
+funDec : Dec a -> Dec b -> Dec (a -> b)
+funDec (Yes x) (Yes y) = Yes (\_ => y)
+funDec (Yes x) (No ny) = No (\f => ny (f x))
+funDec (No nx) _       = Yes (\a => absurd (nx a))
+
+isYes : Dec a -> Bool
+isYes (Yes x) = True
+isYes (No nx) = False
+
+andProduct : (x : Dec a) -> (y : Dec b) -> and (isYes x) (isYes y) === isYes (prodDec x y)
+andProduct (Yes x) (Yes y) = Refl
+andProduct (Yes x) (No ny) = Refl
+andProduct (No nx) (Yes y) = Refl
+andProduct (No nx) (No ny) = Refl
+
+orSum : (x : Dec a) -> (y : Dec b) -> or (isYes x) (isYes y) === isYes (sumDec x y)
+orSum (Yes x) (Yes y) = Refl
+orSum (Yes x) (No ny) = Refl
+orSum (No nx) (Yes y) = Refl
+orSum (No nx) (No ny) = Refl
+
+%hide Prelude.not
+
+notNegate : (x : Dec a) -> not (isYes x) === isYes (negateDec x)
+notNegate (Yes x) = Refl
+notNegate (No f) = Refl
+
+implFun : (x : Dec a) -> (y : Dec b) -> impl (isYes x) (isYes y) === isYes (funDec x y)
+implFun (Yes x) (Yes y) = Refl
+implFun (Yes x) (No ny) = Refl
+implFun (No nx) (Yes y) = Refl
+implFun (No nx) (No ny) = Refl
+
+iff : Bool -> Bool -> Bool
+iff False False = True
+iff False True  = False
+iff True  False = False
+iff True  True  = True
+
+record Iff a b where
+  constructor MkIff
+  to   : a -> b
+  from : b -> a
+
+iffDec : Dec a -> Dec b -> Dec (Iff a b)
+iffDec (Yes x) (Yes y) = Yes (MkIff (\z => y) (\z => x))
+iffDec (Yes x) (No ny) = No (\i => ny (i.to x))
+iffDec (No nx) (Yes y) = No (\i => nx (i.from y))
+iffDec (No nx) (No ny) = Yes (MkIff (\x => absurd (nx x)) (\y => absurd (ny y)))
+
+iffIff : (x : Dec a) -> (y : Dec b) -> iff (isYes x) (isYes y) === isYes (iffDec x y)
+iffIff (Yes x) (Yes y) = Refl
+iffIff (Yes x) (No ny) = Refl
+iffIff (No nx) (Yes y) = Refl
+iffIff (No nx) (No ny) = Refl
+
+-- * Proof by reflection
+
+minus : (m, n : Nat) -> (0 nm : LTE n m) -> Nat
+minus m     0     Z     = m
+minus (S m) (S n) (S x) = minus m n x
+
+toWitness : {a : Type} -> {d : Dec a} -> T (isYes d) -> a
+toWitness {d=Yes x} () = x
+toWitness {d=No nx} x  impossible
+
+minus' : (m, n : Nat) -> {auto nm : T (isYes (lteDec n m)) } -> Nat
+minus' m n {nm} = minus m n (toWitness nm)
+
+x : Nat
+x = minus' 5 3
+
+-- y : Nat
+-- y = minus' 3 5
