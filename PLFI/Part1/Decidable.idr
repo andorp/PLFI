@@ -263,5 +263,8 @@ minus' m n {nm} = minus m n (toWitness nm)
 x : Nat
 x = minus' 5 3
 
--- y : Nat
--- y = minus' 3 5
+-- ISSUE: No type information is provided to LSP
+failing
+  y : Nat
+  y = minus' 3 5
+
