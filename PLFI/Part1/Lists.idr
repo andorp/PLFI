@@ -105,3 +105,63 @@ shuntReverse (Cons x xs) ys = Calc $
   ~= reverse xs ++ (Cons x [] ++ ys)
   ~~ (reverse xs ++ Cons x []) ++ ys ... (sym (appendAssoc (reverse xs) (Cons x []) ys))
   ~= (reverse (Cons x xs) ++ ys)
+
+reverse2 : {a : Type} -> L a -> L a
+reverse2 xs = shunt xs []
+
+reverses : {a : Type} -> (xs : L a) -> reverse2 xs === reverse xs
+reverses xs = Calc $
+  |~ reverse2 xs
+  ~= shunt xs []      -- Refl
+  ~~ reverse xs ++ [] ... (shuntReverse xs [])
+  ~~ reverse xs       ... (appendIdentityRight (reverse xs))
+
+map : (a -> b) -> L a -> L b
+map f [] = []
+map f (Cons x y) = Cons (f x) (map f y)
+
+-- map (g ∘ f) ≡ map g ∘ map f
+
+mapCompose : (xs : L a) -> {0 f : a -> b} -> {0 g : b -> c} -> map (g . f) xs === map g (map f xs)
+mapCompose [] = Calc $
+  |~ map (g . f) []
+  ~= []
+  ~= map g []
+  ~= map g (map f [])
+mapCompose (Cons x xs) = Calc $
+  |~ map (g . f) (Cons x xs)
+  ~= Cons ((g . f) x) (map (g . f) xs)
+  ~= Cons (g (f x)) (map (g . f) xs)
+  ~~ Cons (g (f x)) (map g (map f xs)) ... (cong (Cons (g (f x))) (mapCompose xs))
+  ~= map g (Cons (f x) (map f xs))
+  ~= map g (map f (Cons x xs))
+
+-- map f (xs ++ ys) ≡ map f xs ++ map f ys
+mapAppendDistribute : (xs, ys : L a) -> {0 f : a -> b} -> map f (xs ++ ys) === map f xs ++ map f ys
+mapAppendDistribute [] ys = Calc $
+  |~ map f ([] ++ ys)
+  ~= map f ys
+  ~= [] ++ map f ys
+  ~= map f [] ++ map f ys
+mapAppendDistribute (Cons x xs) ys = Calc $
+  |~ map f (Cons x xs ++ ys)
+  ~= map f (Cons x (xs ++ ys))
+  ~= Cons (f x) (map f (xs ++ ys))
+  ~~ Cons (f x) (map f xs ++ map f ys) ... (cong (Cons (f x)) (mapAppendDistribute xs ys))
+  ~= (Cons (f x) (map f xs)) ++ map f ys
+  ~= map f (Cons x xs) ++ map f ys
+
+foldr : (a -> b -> b) -> b -> L a -> b
+foldr cons nil Nil         = nil
+foldr cons nil (Cons x xs) = cons x (foldr cons nil xs)
+
+appendFoldR : (xs, ys : L a) -> xs ++ ys === foldr Cons ys xs
+appendFoldR [] ys = Calc $
+  |~ [] ++ ys
+  ~= ys
+  ~= foldr Cons ys []
+appendFoldR (Cons x xs) ys = Calc $
+  |~ (Cons x xs) ++ ys
+  ~= Cons x (xs ++ ys)
+  ~~ Cons x (foldr Cons ys xs) ... (cong (Cons x) (appendFoldR xs ys))
+  ~= foldr Cons ys (Cons x xs)
