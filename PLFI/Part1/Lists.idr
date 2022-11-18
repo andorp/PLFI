@@ -165,3 +165,40 @@ appendFoldR (Cons x xs) ys = Calc $
   ~= Cons x (xs ++ ys)
   ~~ Cons x (foldr Cons ys xs) ... (cong (Cons x) (appendFoldR xs ys))
   ~= foldr Cons ys (Cons x xs)
+
+foldRAppend
+  :  (xs, ys : L a)
+  -> {0 f : a -> b -> b} -> {0 e : b}
+  -> foldr f e (xs ++ ys) === foldr f (foldr f e ys) xs
+foldRAppend [] ys = Calc $ 
+  |~ foldr f e ([] ++ ys) 
+  ~= foldr f e ys
+  ~= foldr f (foldr f e ys) []
+foldRAppend (Cons x xs) ys = Calc $
+  |~ foldr f e ((Cons x xs) ++ ys)
+  ~= foldr f e (Cons x (xs ++ ys))
+  ~= f x (foldr f e (xs ++ ys))
+  ~~ f x (foldr f (foldr f e ys) xs)    ... (cong (f x) (foldRAppend xs ys))
+  ~= foldr f (foldr f e ys) (Cons x xs)
+
+foldrEmptyUgly : (xs : L a) -> foldr Cons [] xs === xs
+foldrEmptyUgly xs = (sym (appendFoldR xs [])) `trans` (appendIdentityRight xs)
+
+foldrEmptyPretty : (xs : L a) -> foldr Cons [] xs === xs
+foldrEmptyPretty xs = Calc $
+  |~ foldr Cons [] xs
+  ~~ (xs ++ []) ... (sym (appendFoldR xs []))
+  ~~ xs         ... (appendIdentityRight xs)
+
+-- map f ≡ foldr (λ x xs → f x ∷ xs) []
+mapIsFoldr : (xs : L a) -> {f : a -> b} -> map f xs === foldr (\x , ys => Cons (f x) ys) [] xs
+mapIsFoldr [] = Calc $
+  |~ map f []
+  ~= []
+  ~= foldr (\x , ys => Cons (f x) ys) [] []
+mapIsFoldr (Cons x xs) = Calc $
+  |~ map f (Cons x xs)
+  ~= Cons (f x) (map f xs)
+  ~~ Cons (f x) (foldr (\x , ys => Cons (f x) ys) [] xs) ... (cong (Cons (f x)) (mapIsFoldr xs))
+  ~= foldr (\x , ys => Cons (f x) ys) [] (Cons x xs)
+
