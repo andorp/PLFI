@@ -1,6 +1,7 @@
 module PLFI.Part1.Lists
 
 import Syntax.PreorderReasoning
+import PLFI.Part1.Induction
 
 infixl 0 ~=
 public export
@@ -201,4 +202,95 @@ mapIsFoldr (Cons x xs) = Calc $
   ~= Cons (f x) (map f xs)
   ~~ Cons (f x) (foldr (\x , ys => Cons (f x) ys) [] xs) ... (cong (Cons (f x)) (mapIsFoldr xs))
   ~= foldr (\x , ys => Cons (f x) ys) [] (Cons x xs)
+
+{-
+record IsMonoid {A : Set} (_⊗_ : A → A → A) (e : A) : Set where
+  field
+    assoc : ∀ (x y z : A) → (x ⊗ y) ⊗ z ≡ x ⊗ (y ⊗ z)
+    identityˡ : ∀ (x : A) → e ⊗ x ≡ x
+    identityʳ : ∀ (x : A) → x ⊗ e ≡ x
+
+open IsMonoid
+-}
+
+record IsMonoid {a : Type} (append : a -> a -> a) (e : a) where
+  constructor MkMonoid
+  assoc     : (x,y,z : a) -> append (append x y) z === append x (append y z)
+  identityL : (x : a) -> append e x === x
+  identityR : (x : a) -> append x e === x
+
+
+-- Report issues with this:
+-- infixl 9 <>
+-- data IsMonoidI : {a : Type} -> (append : a -> a -> a) -> (e : a) -> Type where
+--   MkMonoidI
+--     :  {(<>) : a -> a -> a} -> {e : a}
+--     -> (assoc : (x,y,z : a) -> (x <> y) <> z === x <> (y <> z))
+--     -> IsMonoidI (++) e
+
+data IsMonoidI : {a : Type} -> (a -> a -> a) -> a -> Type where
+  MkMonoidI
+--    :  {app : a -> a -> a} -> {e : a}
+    :  (assoc : (x,y,z : a) -> ((x `app` y) `app` z) === (x `app` (y `app` z)))
+    -> (identityL : (x : a) -> (e `app` x) === x)
+    -> (identityR : (x : a) -> (x `app` e) === x)
+    -> IsMonoidI app e
+
+plusMonoid : IsMonoid {a = N} Naturals.(+) 0
+plusMonoid = MkMonoid
+  { assoc     = addAssoc    
+  , identityL = \x => Refl
+  , identityR = addIdentityRWithRewrite
+  }
+
+-- foldr-monoid : ∀ {A : Set} (_⊗_ : A → A → A) (e : A) → IsMonoid _⊗_ e →
+--   ∀ (xs : List A) (y : A) → foldr _⊗_ y xs ≡ foldr _⊗_ e xs ⊗ y
+
+foldrMonoid
+  :  {a : Type} -> (app : a -> a -> a) -> (e : a) -> IsMonoid app e
+  -> (xs : L a) -> (y : a) -> (foldr app y xs) === (app (foldr app e xs) y)
+foldrMonoid app e m Nil y = Calc $
+  |~ foldr app y []
+  ~= y
+  ~~ (e `app` y)                ... (sym (m.identityL y))
+  ~= ((foldr app e []) `app` y)
+foldrMonoid app e m (Cons x xs) y = Calc $
+  |~ foldr app y (Cons x xs)
+  ~= app x (foldr app y xs)
+  ~~ app x (foldr app e xs `app` y)      ... (cong (app x) (foldrMonoid app e m xs y))
+  ~~ ((app x (foldr app e xs)) `app` y)  ... (sym (m.assoc x (foldr app e xs) y))
+  ~= ((foldr app e (Cons x xs)) `app` y)
+
+-- foldrMonoidAppend
+--   :  {a : Type} -> (app : a -> a -> a) -> (e : a) -> IsMonoid app e
+--   -> (xs, ys : L a) -> (foldr app e (xs ++ ys)) === (foldr app e xs `app` foldr app e ys)
+-- foldrMonoidAppend app e m xs ys = Calc $
+--   |~ foldr app e (xs ++ ys) 
+--   ~~ foldr app (foldr app e ys) xs         ... (foldRAppend xs ys)
+--   ~~ (foldr app e xs `app` foldr app e ys) ... (foldrMonoid app e m xs (foldr app e ys))
+
+-- ⨂ U+2A02	N-Ary Circled Times Operator
+
+foldrMonoidAppend
+  :  {a : Type} -> (⨂ : a -> a -> a) -> (e : a) -> IsMonoid ⨂ e
+  -> (xs, ys : L a) -> (foldr ⨂ e (xs ++ ys)) === ((foldr ⨂ e xs) `⨂` (foldr ⨂ e ys))
+foldrMonoidAppend a⨂ e m xs ys = Calc $
+  |~ foldr a⨂ e (xs ++ ys) 
+  ~~ foldr a⨂ (foldr a⨂ e ys) xs         ... (foldRAppend xs ys)
+  ~~ (foldr a⨂ e xs `a⨂` foldr a⨂ e ys) ... (foldrMonoid a⨂ e m xs (foldr a⨂ e ys))
+
+
+foldl : (b -> a -> b) -> b -> L a -> b
+foldl snoc nil Nil         = nil
+foldl snoc nil (Cons x xs) = foldl snoc (snoc nil x) xs
+
+foldr⨉monoid⨉foldl
+  :  {a : Type} -> (⨂ : a -> a -> a) -> (e : a) -> IsMonoid ⨂ e -> (xs : L a)
+  -> (foldr ⨂ e xs === foldl ⨂ e xs)
+foldr⨉monoid⨉foldl a⨂ e m [] = ?todo_0
+foldr⨉monoid⨉foldl a⨂ e m (Cons x y) = ?todo_1
+
+
+
+
 
