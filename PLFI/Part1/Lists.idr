@@ -3,10 +3,10 @@ module PLFI.Part1.Lists
 import Syntax.PreorderReasoning
 import PLFI.Part1.Induction
 
-infixl 0 ~=
-public export
-(~=) : FastDerivation x y -> (0 z : dom) -> {auto xEqy : y = z} -> FastDerivation x z
-(~=) deriv y {xEqy} = deriv ~~ y ...(xEqy) -- Beats writing ...(Refl) time and time again
+-- infixl 0 ~=
+-- public export
+-- (~=) : FastDerivation x y -> (0 z : dom) -> {auto xEqy : y = z} -> FastDerivation x z
+-- (~=) deriv y {xEqy} = deriv ~~ y ...(xEqy) -- Beats writing ...(Refl) time and time again
 
 data L : Type -> Type where
   Nil  : L a
@@ -284,13 +284,143 @@ foldl : (b -> a -> b) -> b -> L a -> b
 foldl snoc nil Nil         = nil
 foldl snoc nil (Cons x xs) = foldl snoc (snoc nil x) xs
 
+foldlAbsorbing
+   : (y : a) -> (x : a) -> (xs : L a) -> IsMonoid op e
+  -> op x (foldl op y xs) === foldl op (op x y) xs
+foldlAbsorbing y x [] m = Calc $
+  |~ op x (foldl op y [])
+  ~= op x y
+  ~= foldl op (op x y) []
+foldlAbsorbing y x (Cons z zs) m = Calc $
+  |~ op x (foldl op y (Cons z zs))
+  ~= op x (foldl op (op y z) zs)
+  ~~ foldl op (op x (op y z)) zs   ... (foldlAbsorbing (op y z) x zs m)
+  ~~ foldl op (op (op x y) z) zs   ... (cong (\w => foldl op w zs) (sym (m.assoc x y z)))
+  ~= foldl op (op x y) (Cons z zs)
+
 foldr⨉monoid⨉foldl
   :  {a : Type} -> (⨂ : a -> a -> a) -> (e : a) -> IsMonoid ⨂ e -> (xs : L a)
   -> (foldr ⨂ e xs === foldl ⨂ e xs)
-foldr⨉monoid⨉foldl a⨂ e m [] = ?todo_0
-foldr⨉monoid⨉foldl a⨂ e m (Cons x y) = ?todo_1
+foldr⨉monoid⨉foldl op e m [] = Calc $
+  |~ foldr op e []
+  ~= e
+  ~= foldl op e []
+foldr⨉monoid⨉foldl op e m (Cons x xs) = Calc $
+  |~ foldr op e (Cons x xs)
+  ~= op x (foldr op e xs)
+  ~~ op x (foldl op e xs)   ... (cong (op x) (foldr⨉monoid⨉foldl op e m xs))
+  ~~ foldl op (op x e) xs   ... (foldlAbsorbing e x xs m)
+  ~~ foldl op x        xs   ... (cong (\y => foldl op y xs) (m.identityR x))
+  ~~ foldl op (op e x) xs   ... (cong (\y => foldl op y xs) (sym (m.identityL x)))
+  ~= foldl op e (Cons x xs)
+
+namespace All
+
+  public export
+  data All : {t : Type} -> (p : t -> Type) -> List t -> Type where
+    Nil  : All p []
+    (::) : {x : t} -> {xs : List t} -> p x -> All p xs -> All p (x :: xs)
+
+namespace Any
+
+  public export
+  data Any : {t : Type} -> (p : t -> Type) -> List t -> Type where
+    Here  : {x : t} -> {xs : List t} -> p x -> Any p (x :: xs)
+    There : {x : t} -> {xs : List t} -> Any p xs -> Any p (x :: xs)
+
+elem : {t : Type} -> (x : t) -> (xs : List t) -> Type
+elem x xs = Any ((===) x) xs
+
+notElem : {t : Type} -> (x : t) -> (xs : List t) -> Type
+notElem x xs = Not (x `elem` xs)
+
+notElem2 : {t : Type} -> (x : t) -> (xs : List t) -> Type
+notElem2 x xs = All (\y => Not (x === y)) xs
+
+prfTo : {t : Type} -> (x : t) -> (xs : List t) -> notElem x xs -> notElem2 x xs
+prfTo z []        nes = []
+prfTo z (x :: xs) nes = (nes . Here) :: (prfTo z xs (nes . There))
+
+prfFrom : {t : Type} -> (x : t) -> (xs : List t) -> notElem2 x xs -> notElem x xs
+prfFrom z []        nes      w         impossible
+prfFrom z (x :: xs) (w :: v) (Here  y) = w y
+prfFrom z (x :: xs) (w :: v) (There y) = prfFrom z xs v y
+
+public export
+record Iff (a, b : Type) where
+  constructor MkIff
+  to     : a -> b
+  from   : b -> a
+
+allPlusPlus : {t : Type} -> {p : t -> Type} -> (xs, ys : List t) -> All p (xs ++ ys) `Iff` (All p xs, All p ys)
+allPlusPlus xs ys = MkIff (to xs ys) (from xs ys)
+  where
+    to : (xs, ys : List t) -> All p (xs ++ ys) -> (All p xs, All p ys)
+    to []        ys pys = ([], pys)
+    to (x :: xs) ys (py :: pxsys) with (to xs ys pxsys)
+      _ | (pxs, pys) = (py :: pxs, pys)
+
+    from : (xs, ys : List t) -> (All p xs, All p ys) -> All p (xs ++ ys)
+    from []        ys ([], pys)        = pys
+    from (x :: xs) ys (px :: pxs, pys) = px :: from xs ys (pxs, pys)
+
+anyPlusPlus : {t : Type} -> {p : t -> Type} -> (xs, ys : List t) -> Any p (xs ++ ys) `Iff` (Either (Any p xs) (Any p ys))
+anyPlusPlus xs ys = MkIff (to xs ys) (from xs ys)
+  where
+    to : (xs, ys : List t) -> Any p (xs ++ ys) -> Either (Any p xs) (Any p ys)
+    to []        ys pxs = Right pxs
+    to (x :: xs) ys (Here  y) = Left (Here y)
+    to (x :: xs) ys (There y) with (to xs ys y)
+      _ | (Left z) = Left (There z)
+      _ | (Right z) = Right z
+
+    from : (xs, ys : List t) -> Either (Any p xs) (Any p ys) -> Any p (xs ++ ys)
+    from []        ys (Left  x) impossible
+    from []        ys (Right x) = x
+    from (x :: xs) ys (Left  (Here  y)) = Here y
+    from (x :: xs) ys (Left  (There y)) = There (from xs ys (Left y))
+    from (x :: xs) ys (Right z) = There (from xs ys (Right z))
 
 
+notAnyPIffAllNotP : {t : Type} -> {p : t -> Type} -> (xs : List t) -> ((Not . Any p) xs) `Iff` (All (Not . p) xs)
+notAnyPIffAllNotP xs = MkIff (to xs) (from xs)
+  where
+    to : (xs : List t) -> (Any p xs -> Void) -> All (\x => p x -> Void) xs
+    to []       not = []
+    to (_ :: _) not = (not . Here) :: to _ (not . There)
+
+    from : (xs : List t) -> All (\x => p x -> Void) xs -> Any p xs -> Void
+    from [] [] any impossible
+    from (x :: xs) (y :: ys) (Here  z) = y z
+    from (x :: xs) (y :: ys) (There z) = from xs ys z
+
+littleLemmaEm
+  :  {t : Type} -> {p : t -> Type} -> (x : t) -> (xs : List t) -> (Dec (p x))
+  -> (All p (x :: xs) -> Void) -> (Either (p x -> Void) (All p xs -> Void))
+littleLemmaEm x []        em notAll = Left (\px => notAll [px])
+littleLemmaEm x (y :: ys) (Yes   px) notAll = Right (notAll . (px ::))
+littleLemmaEm x (y :: ys) (No notPx) notAll = Left  notPx
 
 
+littleLemma
+  :  {t : Type} -> {p : t -> Type} -> (x : t) -> (xs : List t)
+  -> (All p (x :: xs) -> Void) -> (Either (p x -> Void) (All p xs -> Void))
+littleLemma x []        notAll = Left (\px => notAll [px])
+littleLemma x (y :: ys) notAll = ?lawOfExcludedMiddleIsMissing -- can't decide if Left of Right
+
+notAllPIffAnyNotP
+  :  {t : Type} -> {p : t -> Type} -> (xs : List t)
+  -> ((Not . All p)) xs `Iff` (Any (Not . p)) xs
+notAllPIffAnyNotP xs = MkIff (to xs) (from xs)
+  where
+    to : (xs : List t) -> (All p xs -> Void) -> Any (\x => p x -> Void) xs
+    to []        notAll = void (notAll [])
+    to (x :: xs) notAll with (littleLemma x xs notAll)
+      _ | Left  notPx  = Here  (notPx)
+      _ | Right notPxs = There (to xs notPxs)
+
+    from : (xs : List t) -> (Any (\x => p x -> Void) xs) -> All p xs -> Void
+    from []        any impossible
+    from (x :: xs) (Here  notPx)     (px :: pxs) = notPx px
+    from (x :: xs) (There anyNotPxs) (px :: pxs) = from xs anyNotPxs pxs
 

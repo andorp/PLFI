@@ -2,7 +2,7 @@ module PLFI.Part1.Induction
 
 -- http://plfa.github.io/Induction/
 
-import PLFI.Part1.Naturals
+import public PLFI.Part1.Naturals
 import public Syntax.PreorderReasoning
 
 %hide Prelude.(+)
