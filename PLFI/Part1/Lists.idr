@@ -424,3 +424,15 @@ notAllPIffAnyNotP xs = MkIff (to xs) (from xs)
     from (x :: xs) (Here  notPx)     (px :: pxs) = notPx px
     from (x :: xs) (There anyNotPxs) (px :: pxs) = from xs anyNotPxs pxs
 
+total
+weakEm
+  :  ({t : Type} -> (p : t -> Type) -> (xs : List t) -> ((Not . All p)) xs -> (Any (Not . p)) xs)
+  -- ^^^ If this were true
+  -> {a,b : Type} -> Not (a,b) -> Either (Not a) (Not b)
+  -- ^^^ We could prove this. This is still not provable in intuinistic logic
+weakEm assume notAB = case assume {t=Type} id [a,b] notABAll of -- (\[a',b'] => notAB (a',b')) of
+  (Here x)         => Left x
+  (There (Here x)) => Right x
+  where
+    notABAll : All (id {a=Type}) [a,b] -> Void
+    notABAll [x,y] = notAB (x,y)
