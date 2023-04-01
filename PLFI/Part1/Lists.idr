@@ -2,6 +2,7 @@ module PLFI.Part1.Lists
 
 import Syntax.PreorderReasoning
 import PLFI.Part1.Induction
+import Control.Function.FunExt
 
 -- infixl 0 ~=
 -- public export
@@ -436,3 +437,36 @@ weakEm assume notAB = case assume {t=Type} id [a,b] notABAll of -- (\[a',b'] => 
   where
     notABAll : All (id {a=Type}) [a,b] -> Void
     notABAll [x,y] = notAB (x,y)
+
+public export
+record Iso (a, b : Type) where
+  constructor MkIso
+  to     : a -> b
+  from   : b -> a
+  fromTo : (x : a) -> from (to x) === x
+  toFrom : (y : b) -> to (from y) === y
+
+Elem : {a : Type} -> (x : a) -> (xs : List a) -> Type
+Elem x xs = Any (x ===) xs
+
+total
+allForall : FunExt => (xs : List a) -> (p : a -> Type) -> (All p xs) `Iso` ((x : _) -> x `Elem` xs -> p x)
+allForall xs p = MkIso (to xs) (from xs) (fromTo xs) (toFrom xs)
+  where
+    to : (0 xs' : List a) -> All p xs' -> ((x : _) -> x `Elem` xs' -> p x)
+    to (x :: xs) (px :: pxs) x (Here Refl) = px
+    to (x :: xs) (px :: pxs) x' (There y) = to xs pxs x' y
+
+    from : (xs' : List a) -> ((x : _) -> x `Elem` xs' -> p x) -> All p xs'
+    from []        f = []
+    from (x :: xs) f = f x (Here Refl) :: from xs (\x' => f x' . There)
+
+    fromTo : (0 xs' : List a) -> (pxs : All p xs') -> from xs' (to xs' pxs) === pxs
+    fromTo [] [] = Refl
+    fromTo (x :: xs) (px :: pxs) = cong (px ::) (fromTo xs pxs)
+
+    toFrom : (xs' : List a) -> (f : ((x : _) -> x `Elem` xs' -> p x)) -> to xs' (from  xs' f) === f
+    toFrom [] f = funExt $ \x' => funExt $ \ax => case ax of {}
+    toFrom (x :: xs) f = funExt (\x' => funExt $ \w => case w of
+      (Here Refl) => Refl
+      (There y) => cong (\g => g x' y) (toFrom xs (\x' => f x' . There)))
