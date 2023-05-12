@@ -470,3 +470,27 @@ allForall xs p = MkIso (to xs) (from xs) (fromTo xs) (toFrom xs)
     toFrom (x :: xs) f = funExt (\x' => funExt $ \w => case w of
       (Here Refl) => Refl
       (There y) => cong (\g => g x' y) (toFrom xs (\x' => f x' . There)))
+
+total
+anyExist : (0 xs : List a) -> (p : a -> Type) -> (Any p xs) `Iso` (x ** (x `Elem` xs, p x))
+anyExist xs p = MkIso (to xs) (from xs) (fromTo xs) (toFrom xs)
+  where
+    to : (0 xs' : List a) -> (Any p xs') -> (x ** (x `Elem` xs', p x))
+    to (x :: xs) (Here y) = (x ** (Here Refl, y))
+    to (x :: xs) (There y) with (to xs y)
+      _ | (z ** (w1, w2)) = (z ** (There w1, w2))
+
+    from : (0 xs' : List a) -> (x ** (x `Elem` xs', p x)) -> (Any p xs')
+    from (x  :: xs) (x ** (Here y, z))  = Here z
+    from (x' :: xs) (x ** (There y, z)) = There (from xs (x ** (y, z)))
+
+    fromTo : (0 xs' : List a) -> (px : Any p xs') -> from xs' (to xs' px) === px
+    fromTo (x' :: xs') (Here y) = Refl
+    fromTo (x' :: xs') (There y) with (to xs' y) proof val
+      _ | (z ** (w1, w2)) = cong There (cong (from xs') (sym val) `trans` (fromTo xs' y))
+
+    toFrom : (0 xs' : List a) -> (px : (x ** (x `Elem` xs', p x))) -> to xs' (from xs' px) === px
+    toFrom (x  :: xs') (x ** (Here  Refl, px)) = Refl
+    toFrom (x' :: xs') (x ** (There    y, px)) with (to xs' (from xs' (x ** (y, px)))) proof val
+      _ | (z ** (y', pz)) = cong (\(x0 ** (y0, px0)) => (x0 ** (There y0, px0)))
+                                 ((sym val) `trans` (toFrom xs' (x ** (y, px))))
