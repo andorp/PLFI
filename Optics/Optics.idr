@@ -61,6 +61,35 @@ cartesianLens = %search
 lensC2P : {a,b,s,t : Type} -> LensC a b s t -> LensP a b s t
 lensC2P (MkLensC view update) = dimap (\x => (view x,x)) update . first
 
+data Constant : Type -> Type -> Type where
+  MkConstant : (x : a) -> Constant a b
+
+getConstant : Constant a b -> a
+getConstant (MkConstant x) = x
+
+Functor (Constant a) where
+  map f (MkConstant x) = MkConstant x
+
+data UpStar : (Type -> Type) -> Type -> Type -> Type where
+  MkUpStar : (a -> f b) -> UpStar f a b
+
+runUpStar : UpStar f a b -> a -> f b
+runUpStar (MkUpStar k) = k
+
+{f : _} ->
+Functor f =>
+Profunctor (UpStar f) where
+  dimap f g (MkUpStar h) = MkUpStar (map g . h . f)
+
+{f : _} ->
+Functor f =>
+Cartesian (UpStar f) where
+  first  (MkUpStar f) = MkUpStar (\(a,c) => map (,c) (f a))
+  second (MkUpStar f) = MkUpStar (\(c,a) => map (c,) (f a))
+
+-- view : {a : Type} -> LensP a b s t -> s -> a
+-- view ln = getConstant . runUpStar (ln {p=UpStar (Constant a)} (MkUpStar MkConstant))
+
 lensC2P' : {a,b,s,t : Type} -> LensC a b s t -> LensP' a b s t
 lensC2P' (MkLensC view update) p cp = dimap (\x => (view x,x)) update . first
 
@@ -70,11 +99,8 @@ lensP2C f = f (MkLensC id fst)
 lensP2C' : {a,b,s,t : Type} -> LensP' a b s t -> LensC a b s t
 lensP2C' f = f (LensC a b) cartesianLens (MkLensC id fst)
 
-
 funExt : {0 a,b : Type} -> {0 f,g : a -> b} -> ((x : a) -> (f x === g x)) -> (f === g)
 funExt = ?todo1
-
-
 
 viewLemma : (c : LensC a b s t) -> view (lensP2C (lensC2P c)) === view c
 viewLemma (MkLensC view update) = Refl
@@ -105,6 +131,40 @@ funExtDep :
           (f === g)
 funExtDep = ?todo2
 
+-- https://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/poptics.pdf
+lemma10 :
+  {a, b : Type}                                  ->
+  {p : Type -> Type -> Type}                     ->
+  (pf : Profunctor p)                            =>
+  (cp : Cartesian p)                             =>
+  (k : p a b)                                    ->
+  (dimap (\x => (x,x)) Builtin.fst (first k)) === k
+lemma10 k = Calc $
+  |~ dimap (\x => (x,x)) fst (first k)
+  ~~ k ... (?l1)
+
+{-
+dimap (fork (id,id)) fst · first
+= [[ products ]]
+dimap (fork (id,id)) (fst ·cross (id,const ()))· first
+= [[ dimap composition ]]
+dimap (fork (id,id)) fst · dimap id (cross (id,const ()))· first
+= [[ free theorem of first ]]
+dimap (fork (id,id)) fst · dimap (cross (id,const ())) id · first
+= [[ dimap composition ]]
+dimap (cross (id,const ())· fork (id,id)) fst · first
+= [[ products ]]
+dimap (,()) fst · first
+= [[ coherence of first with unit type: dimap fst (,()) = first ]]
+dimap (,()) fst · dimap fst (,())
+= [[ dimap composition ]]
+dimap (fst ·(,())) (fst ·(,()))
+= [[ products ]]
+dimap id id
+= [[ dimap identity ]]
+id
+-}
+
 proof2
   :  (l : LensP' a b s t)
   -> lensC2P' (lensP2C' l) === l
@@ -112,15 +172,22 @@ proof2 l = funExtDep $ \p => funExtDep $ \cp => funExt $ \k => Calc $
   |~ lensC2P' (lensP2C' l) p cp k
   ~~ lensC2P' (l (LensC a b) cartesianLens (MkLensC id fst)) p cp k ... (Refl)
   ~~ flip (\x => lensC2P' x p cp) k (l (LensC a b) cartesianLens (MkLensC id fst)) ... (Refl)
+  ~~ (l p cp (flip (\x => lensC2P' x p cp) k (MkLensC id fst))) ... (?g4)
+  ~~ l p cp (lensC2P' (MkLensC id fst) p cp k)  ... (Refl)
+  ~~ l p cp (dimap (\x => (x,x)) fst (first k)) ... (Refl)
+  ~~ l p cp k ... (cong (l p cp) (lemma10 k))
 
-  -- ~~ l p cp (flip lensC2P' k (MkLensC id fst))
-  --   ... (?g4)
-  -- ~~ l p cp (lensC2P' (MkLensC id fst) k)
-  --   ... (?g3)
-  -- ~~ l p cp (dimap (fork (id,id)) fst (first k))
-  --   ... (?g2)
-  ~~ l p cp k
-    ... (?g1)
+--  0 t : Type
+--  0 s : Type
+--  0 b : Type
+--  0 a : Type
+--    l : (p : (Type -> Type -> Type)) -> Cartesian p -> p a b -> p s t
+--    p : Type -> Type -> Type
+--    cp : Cartesian p
+--    (LensC a b)
+--    cartisianLens
+--    k : p a b
+-- ------------------------------
 
 -- k ~~ p a b
 -- lensC2P (lensP2C l) k
@@ -129,7 +196,7 @@ proof2 l = funExtDep $ \p => funExtDep $ \cp => funExt $ \k => Calc $
 -- = [[ flip ]]
 -- flip lensC2P k (l (Lens id fst))
 -- = [[ free theorem of l, and Lemma 9 ]]
--- l (flip lensC2P k (Lens id fst))
+-- l (flip lensC2P k (Lens id fst))          <----
 -- = [[ flip ]]
 -- l (lensC2P (Lens id fst) k)
 -- = [[ lensC2P ]]
@@ -184,3 +251,6 @@ lensC2P'
 goal3 : lensC2P' (l (LensC a b) (Cartesian at Optics.Optics:15:1--17:34 (\0 c, 0 b', 0 a', arg => first arg) (\0 c, 0 b', 0 a', arg => second arg)) (MkLensC id fst)) = l
 -}
 
+-- * operation example:
+{-
+-}
